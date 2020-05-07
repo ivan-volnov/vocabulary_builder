@@ -52,6 +52,12 @@ std::string Config::get_db_filepath() const
     return get_app_path().append("keybr.db");
 }
 
+std::string Config::get_kindle_db_filepath() const
+{
+    // TODO: use real path to kindle's db file
+    return get_app_path().append("vocab.db");
+}
+
 std::string Config::get_backup_db_filepath() const
 {
     const auto now = std::time(nullptr);

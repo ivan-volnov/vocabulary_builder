@@ -15,12 +15,16 @@ include_directories(./)
 add_executable(${PROJECT_NAME}
     src/app_screen.cpp
     src/app_screen.h
+    src/card.cpp
+    src/card.h
+    src/card_model.cpp
+    src/card_model.h
     src/config.cpp
     src/config.h
     src/global.h
+    src/main.cpp
     src/main_window.cpp
     src/main_window.h
-    src/main.cpp
     src/utility/anki_client.cpp
     src/utility/anki_client.h
     src/utility/curl_request.cpp

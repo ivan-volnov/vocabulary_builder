@@ -6,6 +6,7 @@
 class MainWindow;
 struct _win_st;
 using WINDOW = struct _win_st;
+class CardModel;
 
 
 class AppScreen
@@ -23,6 +24,8 @@ private:
 private:
     WINDOW *win;
     std::unique_ptr<MainWindow> main_window;
+
+    std::shared_ptr<CardModel> model;
 };
 
 #endif // APP_SCREEN_H

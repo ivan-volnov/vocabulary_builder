@@ -23,10 +23,10 @@ void run_app(argparse::ArgumentParser &program)
 //        std::cout << "No cards to study. Please import some" << std::endl;
 //        return;
 //    }
-//    {
-//        AppScreen app(std::move(trainer));
-//        app.run();
-//    }
+    {
+        AppScreen app;
+        app.run();
+    }
 //    trainer->show_stats();
 }
 

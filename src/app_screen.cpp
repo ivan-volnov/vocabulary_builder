@@ -3,12 +3,23 @@
 #include <locale.h>
 #include "main_window.h"
 #include "global.h"
+#include "card_model.h"
 
+
+#define COLOR_TRANSPARRENT  -1
+#define COLOR_LIGHT_BLACK   8
+#define COLOR_LIGHT_RED     9
+#define COLOR_LIGHT_GREEN   10
+#define COLOR_LIGHT_YELLOW  11
+#define COLOR_LIGHT_BLUE    12
+#define COLOR_LIGHT_MAGENTA 13
+#define COLOR_LIGHT_CYAN    14
+#define COLOR_LIGHT_WHITE   15
 
 
 AppScreen::AppScreen()
 {
-    setlocale(LC_ALL, "");
+    setlocale(LC_ALL, "en_US.UTF-8");
     initscr();
     noecho();
     cbreak();
@@ -16,6 +27,7 @@ AppScreen::AppScreen()
     timeout(-1);
     init_colors();
     bkgd(COLOR_PAIR(ColorScheme::ColorWindow));
+    model = std::make_shared<CardModel>();
     main_window = std::make_unique<MainWindow>();
 }
 
@@ -54,7 +66,7 @@ void AppScreen::run()
 //            if (!process_key(key)) {
 //                return;
 //            }
-            main_window->paint();
+            main_window->paint(*model);
             doupdate();
             break;
         }
@@ -66,9 +78,8 @@ void AppScreen::init_colors()
     start_color();
     use_default_colors();
     init_pair(ColorScheme::ColorWindow, COLOR_BLACK, COLOR_WHITE);
-    init_pair(ColorScheme::ColorError, COLOR_RED, -1);
-    init_pair(ColorScheme::ColorMultipleErrors, COLOR_WHITE, COLOR_RED);
-    init_pair(ColorScheme::ColorGray, 251, -1); // https://jonasjacek.github.io/colors/
+    init_pair(ColorScheme::ColorError, COLOR_RED, COLOR_TRANSPARRENT);
+    init_pair(ColorScheme::ColorGray, 251, COLOR_TRANSPARRENT); // https://jonasjacek.github.io/colors/
 }
 
 void AppScreen::paint()
@@ -78,6 +89,6 @@ void AppScreen::paint()
     getmaxyx(stdscr, height, width);
     mvwhline(stdscr, height - 2, 1, '_', width - 2);
     wnoutrefresh(stdscr);
-    main_window->paint();
+    main_window->paint(*model);
     doupdate();
 }

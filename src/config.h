@@ -16,6 +16,7 @@ public:
     std::filesystem::path get_backup_path() const;
 
     std::string get_db_filepath() const;
+    std::string get_kindle_db_filepath() const;
     std::string get_backup_db_filepath() const;
 
     bool is_sound_enabled() const;
