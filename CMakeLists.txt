@@ -29,6 +29,8 @@ add_executable(${PROJECT_NAME}
     src/utility/anki_client.h
     src/utility/curl_request.cpp
     src/utility/curl_request.h
+    src/utility/ncursespp.cpp
+    src/utility/ncursespp.h
     src/utility/speech_engine.cpp
     src/utility/speech_engine.h
     src/utility/tools.cpp
