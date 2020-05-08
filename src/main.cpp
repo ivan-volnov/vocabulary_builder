@@ -1,4 +1,4 @@
-#include "app_screen.h"
+#include "app.h"
 #include <iostream>
 #include <libs/argparse.hpp>
 #include "utility/tools.h"
@@ -25,7 +25,7 @@ void run_app(argparse::ArgumentParser &program)
 //    }
     {
         AppScreen app;
-        app.run();
+        app.exec();
     }
 //    trainer->show_stats();
 }

@@ -13,8 +13,8 @@ include_directories(libs/sqlite_database/include)
 include_directories(./)
 
 add_executable(${PROJECT_NAME}
-    src/app_screen.cpp
-    src/app_screen.h
+    src/app.cpp
+    src/app.h
     src/card.cpp
     src/card.h
     src/card_model.cpp
@@ -23,8 +23,6 @@ add_executable(${PROJECT_NAME}
     src/config.h
     src/global.h
     src/main.cpp
-    src/main_window.cpp
-    src/main_window.h
     src/utility/anki_client.cpp
     src/utility/anki_client.h
     src/utility/curl_request.cpp

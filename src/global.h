@@ -3,11 +3,4 @@
 
 #define MAYTHROW noexcept(false)
 
-enum ColorScheme : unsigned int
-{
-    ColorWindow,
-    ColorError,
-    ColorGray
-};
-
 #endif // GLOBAL_H
