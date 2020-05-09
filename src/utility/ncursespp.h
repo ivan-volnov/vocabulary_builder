@@ -211,39 +211,153 @@ using CursesBorder = Border<CursesWindow>;
 
 
 
+template<bool vertical>
 class Layout: public Window
 {
 public:
-    enum LayoutType {
-        HorizontalLayout,
-        VerticalLayout,
-    };
 
-    Layout(LayoutType type, uint16_t splitter_size = 0);
+    Layout(uint16_t splitter_size = 0) :
+        splitter_size(splitter_size)
+    {
 
-    void resize(uint16_t height, uint16_t width) override;
-    void move(uint16_t y, uint16_t x) override;
-    void paint() const override;
+    }
 
-    bool process_key(uint16_t key) const override;
-    bool process_symbol(char32_t ch) const override;
+    void resize(uint16_t height, uint16_t width) override
+    {
+        if (height == get_height() && width == get_width()) {
+            return;
+        }
+        Window::resize(height, width);
+        update_layout();
+    }
 
-    void add(WindowPtr win) override;
-    void del(WindowPtr win) override;
-    void clear() override;
+    void move(uint16_t y, uint16_t x) override
+    {
+        if (y == get_y() && x == get_x()) {
+            return;
+        }
+        Window::move(y, x);
+        auto pos = get_pos(*this);
+        for (auto &win : windows) {
+            win.first->move(y, x);
+            set_pos(*win.first, pos);
+            pos += get_size(*win.first) + splitter_size;
+        }
+    }
+
+    void paint() const override
+    {
+        for (auto &win : windows) {
+            win.first->paint();
+        }
+    }
+
+    bool process_key(uint16_t key) const override
+    {
+        for (auto &win : windows) {
+            if (!win.first->process_key(key)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool process_symbol(char32_t ch) const override
+    {
+        for (auto &win : windows) {
+            if (!win.first->process_symbol(ch)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void add(WindowPtr win) override
+    {
+        if (win) {
+            windows.push_back({ win, vertical ? win->get_height() : win->get_width() });
+            win->set_parent(shared_from_this());
+            update_layout();
+        }
+    }
+
+    void del(WindowPtr win) override
+    {
+        auto it = std::find_if(windows.begin(), windows.end(), [win](const auto &pair) { return pair.first == win; });
+        if (it != windows.end()) {
+            it->first->set_parent(nullptr);
+            windows.erase(it);
+            update_layout();
+        }
+    }
+
+    void clear() override
+    {
+        for (auto it = windows.begin(); it != windows.end(); it = windows.erase(it)) {
+            it->first->set_parent(nullptr);
+        }
+    }
 
 private:
-    void update_layout();
-    uint16_t get_size(Window &window) const;
-    uint16_t get_pos(Window &window) const;
-    void set_size(Window &window, uint16_t size) const;
-    void set_pos(Window &window, uint16_t pos) const;
+    void update_layout()
+    {
+        if (windows.empty()) {
+            return;
+        }
+        auto size = get_size(*this);
+        if (splitter_size) {
+            size -= std::min(size, static_cast<uint16_t>(splitter_size * (windows.size() - 1)));
+        }
+        uint16_t expanders = 0;
+        for (auto &win : windows) {
+            if (!win.second) {
+                ++expanders;
+            }
+            else {
+                set_size(*win.first, std::min(size, win.second));
+                size -= get_size(*win.first);
+            }
+        }
+        const auto segment = expanders ? size / expanders : 0;
+        auto remainder = expanders ? size % expanders : size;
+        auto pos = get_pos(*this);
+        for (auto &win : windows) {
+            if (!win.second) {
+                set_size(*win.first, segment + remainder);
+                remainder = 0;
+            }
+            set_pos(*win.first, pos);
+            pos += get_size(*win.first) + splitter_size;
+        }
+    }
+
+    uint16_t get_size(Window &window) const
+    {
+        return vertical ? window.get_height() : window.get_width();
+    }
+
+    uint16_t get_pos(Window &window) const
+    {
+        return vertical ? window.get_y() : window.get_x();
+    }
+
+    void set_size(Window &window, uint16_t size) const
+    {
+        vertical ? window.resize(size, get_width()) : window.resize(get_height(), size);
+    }
+
+    void set_pos(Window &window, uint16_t pos) const
+    {
+        vertical ? window.move(pos, get_x()) : window.move(get_y(), pos);
+    }
 
 private:
-    LayoutType type;
     std::vector<std::pair<WindowPtr, uint16_t>> windows;
     uint16_t splitter_size;
 };
+
+using VerticalLayout = Layout<true>;
+using HorizontalLayout = Layout<false>;
 
 
 

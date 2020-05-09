@@ -30,7 +30,7 @@ App::App()
 
 void App::run()
 {
-    auto layout = screen->create<SimpleBorder>()->create<Layout>(Layout::HorizontalLayout, 1);
+    auto layout = screen->create<SimpleBorder>()->create<HorizontalLayout>(1);
     layout->create<CursesWindow>()->set_color(ColorScheme::Test);
     layout->create<CursesWindow>()->set_color(ColorScheme::Test2);
 
