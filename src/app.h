@@ -6,18 +6,6 @@
 class CardModel;
 
 
-
-enum ColorScheme : uint16_t
-{
-    ColorWindow,
-    ColorError,
-    ColorGray,
-    ColorTest,
-    ColorTest2,
-    ColorTest3,
-};
-
-
 class App
 {
 public:

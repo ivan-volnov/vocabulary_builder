@@ -30,23 +30,33 @@ SOFTWARE.
 
 
 #define COLOR_TRANSPARRENT  -1
-#define COLOR_LIGHT_BLACK   8
-#define COLOR_LIGHT_RED     9
+#define COLOR_BLACK          0
+#define COLOR_RED            1
+#define COLOR_GREEN          2
+#define COLOR_YELLOW         3
+#define COLOR_BLUE           4
+#define COLOR_MAGENTA        5
+#define COLOR_CYAN           6
+#define COLOR_WHITE          7
+#define COLOR_LIGHT_BLACK    8
+#define COLOR_LIGHT_RED      9
 #define COLOR_LIGHT_GREEN   10
 #define COLOR_LIGHT_YELLOW  11
 #define COLOR_LIGHT_BLUE    12
 #define COLOR_LIGHT_MAGENTA 13
 #define COLOR_LIGHT_CYAN    14
 #define COLOR_LIGHT_WHITE   15
+// for more colors get values on https://jonasjacek.github.io/colors/
 
 
 
 struct _win_st;
-using NCursesWindow = struct _win_st;
-
+using NCursesWindowPtr = struct _win_st;
 
 class Window;
 using WindowPtr = std::shared_ptr<Window>;
+
+
 
 class Window : public std::enable_shared_from_this<Window>
 {
@@ -97,16 +107,16 @@ public:
     CursesWindow &operator=(const CursesWindow &) = delete;
     ~CursesWindow();
 
-    void set_color(uint16_t color);
+    void set_color(const std::string &color);
 
     void resize(uint16_t height, uint16_t width) override;
     void move(uint16_t y, uint16_t x) override;
     void paint() const override;
 
-    NCursesWindow *get_win();
+    NCursesWindowPtr *get_win();
 
 protected:
-    NCursesWindow *win;
+    NCursesWindowPtr *win;
 };
 
 
@@ -231,7 +241,9 @@ public:
     ~Screen();
 
     void show_cursor(bool value = true);
-    void set_color(uint16_t color);
+    void init_color(const std::string &color, int16_t foregroung, int16_t background);
+
+    void set_color(const std::string &color);
 
     void resize(uint16_t height, uint16_t width) override;
     void move(uint16_t y, uint16_t x) override;

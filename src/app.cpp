@@ -2,19 +2,28 @@
 #include <ncurses.h>
 #include "card_model.h"
 
+namespace ColorScheme {
+
+constexpr auto Window = "window";
+constexpr auto Error =  "error";
+constexpr auto Gray =   "gray";
+constexpr auto Test =   "test";
+constexpr auto Test2 =  "test2";
+constexpr auto Test3 =  "test3";
+
+}
 
 
 App::App()
 {
     screen = std::make_shared<Screen>();
+    screen->init_color(ColorScheme::Window, COLOR_BLACK, COLOR_WHITE);
+    screen->init_color(ColorScheme::Error, COLOR_RED, COLOR_TRANSPARRENT);
+    screen->init_color(ColorScheme::Gray, 251, COLOR_TRANSPARRENT);
 
-    init_pair(ColorScheme::ColorWindow, COLOR_BLACK, COLOR_WHITE);
-    init_pair(ColorScheme::ColorError, COLOR_RED, COLOR_TRANSPARRENT);
-    init_pair(ColorScheme::ColorGray, 251, COLOR_TRANSPARRENT); // https://jonasjacek.github.io/colors/
-
-    init_pair(ColorScheme::ColorTest, COLOR_WHITE, COLOR_RED);
-    init_pair(ColorScheme::ColorTest2, COLOR_WHITE, COLOR_BLUE);
-    init_pair(ColorScheme::ColorTest3, COLOR_WHITE, COLOR_BLACK);
+    screen->init_color(ColorScheme::Test, COLOR_WHITE, COLOR_RED);
+    screen->init_color(ColorScheme::Test2, COLOR_WHITE, COLOR_BLUE);
+    screen->init_color(ColorScheme::Test3, COLOR_WHITE, COLOR_BLACK);
 
     screen->show_cursor(false);
 }
@@ -22,11 +31,11 @@ App::App()
 void App::run()
 {
     auto layout = screen->create<SimpleBorder>()->create<Layout>(Layout::HorizontalLayout, 1);
-    layout->create<CursesWindow>()->set_color(ColorScheme::ColorTest);
-    layout->create<CursesWindow>()->set_color(ColorScheme::ColorTest2);
+    layout->create<CursesWindow>()->set_color(ColorScheme::Test);
+    layout->create<CursesWindow>()->set_color(ColorScheme::Test2);
 
     auto border = screen->create<SimpleBorder>(3, 4)->create<CursesBorder>();
-    border->set_color(ColorScheme::ColorTest3);
+    border->set_color(ColorScheme::Test3);
     auto win = border->create<MainWindow>();
 
     screen->paint();

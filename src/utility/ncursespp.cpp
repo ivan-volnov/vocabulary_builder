@@ -26,7 +26,48 @@ SOFTWARE.
 #include "ncursespp.h"
 #include <ncurses.h>
 #include <locale.h>
+#include <mutex>
 #include "utf8_tools.h"
+
+
+
+class internal
+{
+public:
+    static internal &instance()
+    {
+        static internal i;
+        return i;
+    }
+
+    void init_color(const std::string &color, int16_t foregroung, int16_t background)
+    {
+        std::lock_guard lock(mutex);
+        auto it = std::find(colors.begin(), colors.end(), color);
+        if (it == colors.end()) {
+            init_pair(colors.size(), foregroung, background);
+            colors.push_back(color);
+        }
+    }
+
+    uint32_t get_color(const std::string &color)
+    {
+        std::lock_guard lock(mutex);
+        for (uint16_t i = 0; i < colors.size(); ++i) {
+            if (colors[i] == color) {
+                return COLOR_PAIR(i);
+            }
+        }
+        assert(!"color haven't found");
+        return 0;
+    }
+
+private:
+    internal() = default;
+    std::vector<std::string> colors;
+    std::mutex mutex;
+};
+
 
 
 Window::Window(uint16_t height, uint16_t width, uint16_t y, uint16_t x) :
@@ -151,9 +192,9 @@ CursesWindow::~CursesWindow()
     delwin(win);
 }
 
-void CursesWindow::set_color(uint16_t color)
+void CursesWindow::set_color(const std::string &color)
 {
-    wbkgd(win, COLOR_PAIR(color));
+    wbkgd(win, internal::instance().get_color(color));
 }
 
 void CursesWindow::resize(uint16_t height, uint16_t width)
@@ -178,7 +219,7 @@ void CursesWindow::paint() const
     wnoutrefresh(win);
 }
 
-NCursesWindow *CursesWindow::get_win()
+NCursesWindowPtr *CursesWindow::get_win()
 {
     return win;
 }
@@ -351,9 +392,14 @@ void Screen::show_cursor(bool value)
     curs_set(value);
 }
 
-void Screen::set_color(uint16_t color)
+void Screen::init_color(const std::string &color, int16_t foregroung, int16_t background)
 {
-    bkgd(COLOR_PAIR(color));
+    internal::instance().init_color(color, foregroung, background);
+}
+
+void Screen::set_color(const std::string &color)
+{
+    bkgd(internal::instance().get_color(color));
 }
 
 void Screen::resize(uint16_t height, uint16_t width)
