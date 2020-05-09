@@ -7,11 +7,14 @@ class CardModel;
 
 
 
-enum ColorScheme : int16_t
+enum ColorScheme : uint16_t
 {
     ColorWindow,
     ColorError,
     ColorGray,
+    ColorTest,
+    ColorTest2,
+    ColorTest3,
 };
 
 

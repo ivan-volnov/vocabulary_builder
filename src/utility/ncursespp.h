@@ -74,9 +74,12 @@ class CursesWindow : public Window
 {
 public:
     CursesWindow();
+    CursesWindow(const Window &rhs);
+    CursesWindow(const CursesWindow &) = delete;
+    CursesWindow &operator=(const CursesWindow &) = delete;
     ~CursesWindow();
 
-    void set_color(int16_t color);
+    void set_color(uint16_t color);
 
     void resize(uint16_t height, uint16_t width) override;
     void move(uint16_t y, uint16_t x) override;
@@ -90,22 +93,58 @@ protected:
 
 
 
-class WindowBorder : public Window
+template <typename T>
+class Border : public T
 {
 public:
-    WindowBorder(std::shared_ptr<Window> window, uint16_t border_h, uint16_t border_w);
+    Border(std::shared_ptr<Window> window, uint16_t border_h = 1, uint16_t border_w = 1) :
+        T(*window), inner_window(std::move(window)), border_h(border_h), border_w(border_w)
+    {
+        inner_window->move(inner_window->get_y() + border_h, inner_window->get_x() + border_w);
+    }
 
-    void resize(uint16_t height, uint16_t width) override;
-    void move(uint16_t y, uint16_t x) override;
-    void paint() const override;
+    void resize(uint16_t height, uint16_t width) override
+    {
+        if (height != T::get_height() || width != T::get_width()) {
+            T::resize(height, width);
+            inner_window->resize(std::max(0, static_cast<int32_t>(height) - border_h * 2),
+                                 std::max(0, static_cast<int32_t>(width)  - border_w * 2));
+        }
+    }
 
-    bool process_key(uint16_t key) const override;
-    bool process_symbol(char32_t ch) const override;
+    void move(uint16_t y, uint16_t x) override
+    {
+        if (y != T::get_y() || x != T::get_x()) {
+            T::move(y, x);
+            inner_window->move(y + border_h, x + border_w);
+        }
+    }
+
+    void paint() const override
+    {
+        T::paint();
+        inner_window->paint();
+    }
+
+    bool process_key(uint16_t key) const override
+    {
+        return inner_window->process_key(key);
+    }
+
+    bool process_symbol(char32_t ch) const override
+    {
+        return inner_window->process_symbol(ch);
+    }
+
+protected:
+    std::shared_ptr<Window> inner_window;
 
 private:
-    std::shared_ptr<Window> inner_window;
     uint16_t border_h, border_w;
 };
+
+using WindowBorder = Border<Window>;
+using CursesBorder = Border<CursesWindow>;
 
 
 
@@ -152,13 +191,15 @@ public:
 
     void show_cursor(bool value = true);
     void set_window(std::shared_ptr<Window> win);
-    void set_color(int16_t color);
+    void set_modal(std::shared_ptr<Window> win);
+    void set_color(uint16_t color);
 
 protected:
     virtual void paint() const;
 
 private:
     std::shared_ptr<Window> window;
+    std::shared_ptr<Window> modal;
 };
 
 

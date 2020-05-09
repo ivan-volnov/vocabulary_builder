@@ -84,7 +84,14 @@ uint16_t Window::get_x() const
 
 
 
-CursesWindow::CursesWindow()
+CursesWindow::CursesWindow() :
+    CursesWindow(Window())
+{
+
+}
+
+CursesWindow::CursesWindow(const Window &rhs) :
+    Window(rhs)
 {
     win = subwin(stdscr, 1, 1, 0, 0);
     leaveok(win, true);
@@ -95,7 +102,7 @@ CursesWindow::~CursesWindow()
     delwin(win);
 }
 
-void CursesWindow::set_color(int16_t color)
+void CursesWindow::set_color(uint16_t color)
 {
     wbkgd(win, COLOR_PAIR(color));
 }
@@ -125,48 +132,6 @@ void CursesWindow::paint() const
 WINDOW *CursesWindow::get_win()
 {
     return win;
-}
-
-
-
-WindowBorder::WindowBorder(std::shared_ptr<Window> window, uint16_t border_h, uint16_t border_w) :
-    Window(*window), inner_window(std::move(window)), border_h(border_h), border_w(border_w)
-{
-    inner_window->move(inner_window->get_y() + border_h, inner_window->get_x() + border_w);
-    inner_window->resize(std::max(0, static_cast<int32_t>(inner_window->get_height()) - border_h * 2),
-                         std::max(0, static_cast<int32_t>(inner_window->get_width())  - border_w * 2));
-}
-
-void WindowBorder::resize(uint16_t height, uint16_t width)
-{
-    if (height != get_height() || width != get_width()) {
-        Window::resize(height, width);
-        inner_window->resize(std::max(0, static_cast<int32_t>(height) - border_h * 2),
-                             std::max(0, static_cast<int32_t>(width)  - border_w * 2));
-    }
-}
-
-void WindowBorder::move(uint16_t y, uint16_t x)
-{
-    if (y != get_y() || x != get_x()) {
-        Window::move(y, x);
-        inner_window->move(y + border_h, x + border_w);
-    }
-}
-
-void WindowBorder::paint() const
-{
-    inner_window->paint();
-}
-
-bool WindowBorder::process_key(uint16_t key) const
-{
-    return inner_window->process_key(key);
-}
-
-bool WindowBorder::process_symbol(char32_t ch) const
-{
-    return inner_window->process_symbol(ch);
 }
 
 
@@ -305,6 +270,7 @@ Screen::Screen()
 
 Screen::~Screen()
 {
+    modal.reset();
     window.reset();
     keypad(stdscr, false);
     echo();
@@ -315,21 +281,19 @@ Screen::~Screen()
 
 void Screen::exec()
 {
-    window->resize(getmaxy(stdscr), getmaxx(stdscr));
-    paint();
     int key;
     utf8::decoder decoder;
-    while (true)
-    {
+    while (true) {
         if ((key = wgetch(stdscr)) < 0) {
             continue;
         }
         if (key <= 0xff) {
             if (decoder.decode_symbol(key)) {
-                if (!window->process_symbol(decoder.symbol())) {
+                auto win = modal ? modal : window;
+                if (!win || !win->process_symbol(decoder.symbol())) {
                     return;
                 }
-                window->paint();
+                win->paint();
                 doupdate();
             }
         }
@@ -337,13 +301,21 @@ void Screen::exec()
             int height, width;
             getmaxyx(stdscr, height, width);
             if (is_term_resized(width, height)) {
-                window->resize(height, width);
+                if (window) {
+                    window->resize(height, width);
+                }
+                if (modal) {
+                    modal->resize(height, width);
+                }
                 resize_term(height, width);
                 paint();
             }
         }
-        else if (key < KEY_MAX && !window->process_key(key)) {
-            return;
+        else if (key < KEY_MAX) {
+            auto win = modal ? modal : window;
+            if (!win || !win->process_key(key)) {
+                return;
+            }
         }
     }
 }
@@ -355,10 +327,21 @@ void Screen::show_cursor(bool value)
 
 void Screen::set_window(std::shared_ptr<Window> win)
 {
-    window = win;
+    if ((window = win)) {
+        window->resize(getmaxy(stdscr), getmaxx(stdscr));
+    }
+    paint();
 }
 
-void Screen::set_color(int16_t color)
+void Screen::set_modal(std::shared_ptr<Window> win)
+{
+    if ((modal = win)) {
+        modal->resize(getmaxy(stdscr), getmaxx(stdscr));
+    }
+    paint();
+}
+
+void Screen::set_color(uint16_t color)
 {
     bkgd(COLOR_PAIR(color));
 }
@@ -367,6 +350,11 @@ void Screen::paint() const
 {
     clear();
     wnoutrefresh(stdscr);
-    window->paint();
+    if (window) {
+        window->paint();
+    }
+    if (modal) {
+        modal->paint();
+    }
     doupdate();
 }
