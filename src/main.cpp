@@ -24,8 +24,8 @@ void run_app(argparse::ArgumentParser &program)
 //        return;
 //    }
     {
-        AppScreen app;
-        app.exec();
+        App app;
+        app.run();
     }
 //    trainer->show_stats();
 }

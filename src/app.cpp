@@ -3,8 +3,11 @@
 #include "card_model.h"
 
 
-AppScreen::AppScreen()
+
+App::App()
 {
+    screen = std::make_shared<Screen>();
+
     init_pair(ColorScheme::ColorWindow, COLOR_BLACK, COLOR_WHITE);
     init_pair(ColorScheme::ColorError, COLOR_RED, COLOR_TRANSPARRENT);
     init_pair(ColorScheme::ColorGray, 251, COLOR_TRANSPARRENT); // https://jonasjacek.github.io/colors/
@@ -13,33 +16,22 @@ AppScreen::AppScreen()
     init_pair(ColorScheme::ColorTest2, COLOR_WHITE, COLOR_BLUE);
     init_pair(ColorScheme::ColorTest3, COLOR_WHITE, COLOR_BLACK);
 
-    show_cursor(false);
+    screen->show_cursor(false);
+}
 
-    auto main_window = std::make_shared<MainWindow>();
-    main_window->set_color(ColorScheme::ColorWindow);
+void App::run()
+{
+    auto layout = screen->create<SimpleBorder>()->create<Layout>(Layout::HorizontalLayout, 1);
+    layout->create<CursesWindow>()->set_color(ColorScheme::ColorTest);
+    layout->create<CursesWindow>()->set_color(ColorScheme::ColorTest2);
 
-//    auto footer = std::make_shared<Footer>();
-//    footer->resize(2, 0);
-
-    auto layout2 = std::make_shared<Layout>(Layout::HorizontalLayout, 1);
-    auto win1 = std::make_shared<CursesWindow>();
-    win1->set_color(ColorScheme::ColorTest);
-    layout2->add(win1);
-    auto win2 = std::make_shared<CursesWindow>();
-    win2->set_color(ColorScheme::ColorTest2);
-    layout2->add(win2);
-
-//    auto layout = std::make_shared<Layout>(Layout::VerticalLayout, 0);
-//    layout->add(std::make_shared<WindowBorder>(main_window, 2, 3));
-//    layout->add(footer);
-
-//    set_window(std::make_shared<WindowBorder>(layout, 1, 1));
-    set_window(std::make_shared<WindowBorder>(layout2, 1, 1));
-
-    auto border = std::make_shared<CursesBorder>(main_window);
+    auto border = screen->create<SimpleBorder>(3, 4)->create<CursesBorder>();
     border->set_color(ColorScheme::ColorTest3);
+    auto win = border->create<MainWindow>();
 
-    set_modal(std::make_shared<WindowBorder>(border, 3, 4));
+    screen->paint();
+
+    win->run_modal();
 }
 
 

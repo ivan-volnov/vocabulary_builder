@@ -35,6 +35,42 @@ Window::Window(uint16_t height, uint16_t width, uint16_t y, uint16_t x) :
 
 }
 
+void Window::run_modal()
+{
+    int key;
+    utf8::decoder decoder;
+    while (true) {
+        if ((key = wgetch(stdscr)) < 0) {
+            continue;
+        }
+        if (key <= 0xff) {
+            if (decoder.decode_symbol(key)) {
+                if (!process_symbol(decoder.symbol())) {
+                    return;
+                }
+                paint();
+                doupdate();
+            }
+        }
+        else if (key == KEY_RESIZE) {
+            int height, width;
+            getmaxyx(stdscr, height, width);
+            if (is_term_resized(width, height)) {
+                auto top = shared_from_this();
+                for (WindowPtr next; (next = top->parent().lock());) {
+                    top = next;
+                }
+                top->resize(height, width);
+                resize_term(height, width);
+                top->paint();
+            }
+        }
+        else if (key < KEY_MAX && !process_key(key)) {
+            return;
+        }
+    }
+}
+
 void Window::resize(uint16_t height, uint16_t width)
 {
     _height = height;
@@ -82,16 +118,29 @@ uint16_t Window::get_x() const
     return _x;
 }
 
+std::weak_ptr<Window> Window::parent() const
+{
+    return _parent;
+}
 
+void Window::set_parent(WindowPtr win)
+{
+    _parent = win;
+}
 
-CursesWindow::CursesWindow() :
-    CursesWindow(Window())
+void Window::add(WindowPtr)
 {
 
 }
 
-CursesWindow::CursesWindow(const Window &rhs) :
-    Window(rhs)
+void Window::del(WindowPtr)
+{
+
+}
+
+
+
+CursesWindow::CursesWindow()
 {
     win = subwin(stdscr, 1, 1, 0, 0);
     leaveok(win, true);
@@ -129,7 +178,7 @@ void CursesWindow::paint() const
     wnoutrefresh(win);
 }
 
-WINDOW *CursesWindow::get_win()
+NCursesWindow *CursesWindow::get_win()
 {
     return win;
 }
@@ -142,45 +191,13 @@ Layout::Layout(Layout::LayoutType type, uint16_t splitter_size) :
 
 }
 
-void Layout::add(std::shared_ptr<Window> window)
-{
-    windows.push_back({ window, type == VerticalLayout ? window->get_height() : window->get_width() });
-}
-
 void Layout::resize(uint16_t height, uint16_t width)
 {
     if (height == get_height() && width == get_width()) {
         return;
     }
     Window::resize(height, width);
-    if (windows.empty()) {
-        return;
-    }
-    auto size = get_size(*this);
-    if (splitter_size) {
-        size -= std::min(size, static_cast<uint16_t>(splitter_size * (windows.size() - 1)));
-    }
-    uint16_t expanders = 0;
-    for (auto &win : windows) {
-        if (!win.second) {
-            ++expanders;
-        }
-        else {
-            set_size(*win.first, std::min(size, win.second));
-            size -= get_size(*win.first);
-        }
-    }
-    const auto segment = expanders ? size / expanders : 0;
-    auto remainder = expanders ? size % expanders : size;
-    auto pos = get_pos(*this);
-    for (auto &win : windows) {
-        if (!win.second) {
-            set_size(*win.first, segment + remainder);
-            remainder = 0;
-        }
-        set_pos(*win.first, pos);
-        pos += get_size(*win.first) + splitter_size;
-    }
+    update_layout();
 }
 
 void Layout::move(uint16_t y, uint16_t x)
@@ -222,6 +239,56 @@ bool Layout::process_symbol(char32_t ch) const
         }
     }
     return true;
+}
+
+void Layout::add(WindowPtr win)
+{
+    if (win) {
+        windows.push_back({ win, type == VerticalLayout ? win->get_height() : win->get_width() });
+        win->set_parent(shared_from_this());
+        update_layout();
+    }
+}
+
+void Layout::del(WindowPtr win)
+{
+    auto it = std::find_if(windows.begin(), windows.end(), [win](const auto &pair) { return pair.first == win; });
+    if (it != windows.end()) {
+        windows.erase(it);
+        update_layout();
+    }
+}
+
+void Layout::update_layout()
+{
+    if (windows.empty()) {
+        return;
+    }
+    auto size = get_size(*this);
+    if (splitter_size) {
+        size -= std::min(size, static_cast<uint16_t>(splitter_size * (windows.size() - 1)));
+    }
+    uint16_t expanders = 0;
+    for (auto &win : windows) {
+        if (!win.second) {
+            ++expanders;
+        }
+        else {
+            set_size(*win.first, std::min(size, win.second));
+            size -= get_size(*win.first);
+        }
+    }
+    const auto segment = expanders ? size / expanders : 0;
+    auto remainder = expanders ? size % expanders : size;
+    auto pos = get_pos(*this);
+    for (auto &win : windows) {
+        if (!win.second) {
+            set_size(*win.first, segment + remainder);
+            remainder = 0;
+        }
+        set_pos(*win.first, pos);
+        pos += get_size(*win.first) + splitter_size;
+    }
 }
 
 uint16_t Layout::get_size(Window &window) const
@@ -266,12 +333,12 @@ Screen::Screen()
     timeout(-1);
     start_color();
     use_default_colors();
+    static_cast<Window &>(*this) = Window(getmaxy(stdscr), getmaxx(stdscr));
 }
 
 Screen::~Screen()
 {
-    modal.reset();
-    window.reset();
+    windows.clear();
     keypad(stdscr, false);
     echo();
     nocbreak();
@@ -279,66 +346,9 @@ Screen::~Screen()
     endwin();
 }
 
-void Screen::exec()
-{
-    int key;
-    utf8::decoder decoder;
-    while (true) {
-        if ((key = wgetch(stdscr)) < 0) {
-            continue;
-        }
-        if (key <= 0xff) {
-            if (decoder.decode_symbol(key)) {
-                auto win = modal ? modal : window;
-                if (!win || !win->process_symbol(decoder.symbol())) {
-                    return;
-                }
-                win->paint();
-                doupdate();
-            }
-        }
-        else if (key == KEY_RESIZE) {
-            int height, width;
-            getmaxyx(stdscr, height, width);
-            if (is_term_resized(width, height)) {
-                if (window) {
-                    window->resize(height, width);
-                }
-                if (modal) {
-                    modal->resize(height, width);
-                }
-                resize_term(height, width);
-                paint();
-            }
-        }
-        else if (key < KEY_MAX) {
-            auto win = modal ? modal : window;
-            if (!win || !win->process_key(key)) {
-                return;
-            }
-        }
-    }
-}
-
 void Screen::show_cursor(bool value)
 {
     curs_set(value);
-}
-
-void Screen::set_window(std::shared_ptr<Window> win)
-{
-    if ((window = win)) {
-        window->resize(getmaxy(stdscr), getmaxx(stdscr));
-    }
-    paint();
-}
-
-void Screen::set_modal(std::shared_ptr<Window> win)
-{
-    if ((modal = win)) {
-        modal->resize(getmaxy(stdscr), getmaxx(stdscr));
-    }
-    paint();
 }
 
 void Screen::set_color(uint16_t color)
@@ -346,15 +356,66 @@ void Screen::set_color(uint16_t color)
     bkgd(COLOR_PAIR(color));
 }
 
+void Screen::resize(uint16_t height, uint16_t width)
+{
+    for (auto &win : windows) {
+        win->resize(height, width);
+    }
+}
+
+void Screen::move(uint16_t y, uint16_t x)
+{
+    for (auto &win : windows) {
+        win->move(y, x);
+    }
+}
+
 void Screen::paint() const
 {
     clear();
     wnoutrefresh(stdscr);
-    if (window) {
-        window->paint();
-    }
-    if (modal) {
-        modal->paint();
+    for (auto &win : windows) {
+        win->paint();
     }
     doupdate();
+}
+
+bool Screen::process_key(uint16_t key) const
+{
+    for (auto &win : windows) {
+        if (!win->process_key(key)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Screen::process_symbol(char32_t ch) const
+{
+    for (auto &win : windows) {
+        if (!win->process_symbol(ch)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void Screen::add(WindowPtr win)
+{
+    auto it = std::find(windows.begin(), windows.end(), win);
+    if (it == windows.end()) {
+        win->move(0, 0);
+        win->resize(get_height(), get_width());
+        win->set_parent(shared_from_this());
+        windows.push_back(std::move(win));
+    }
+}
+
+void Screen::del(WindowPtr win)
+{
+    auto it = std::find(windows.begin(), windows.end(), win);
+    if (it != windows.end()) {
+        (*it)->set_parent(nullptr);
+        windows.erase(it);
+    }
 }

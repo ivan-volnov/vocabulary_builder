@@ -18,11 +18,17 @@ enum ColorScheme : uint16_t
 };
 
 
-
-class AppScreen : public Screen
+class App
 {
 public:
-    AppScreen();
+    App();
+    void run();
+
+    App(const App &) = delete;
+    App &operator=(const App &) = delete;
+
+private:
+    std::shared_ptr<Screen> screen;
 };
 
 

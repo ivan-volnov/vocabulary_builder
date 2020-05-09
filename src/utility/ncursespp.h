@@ -42,15 +42,19 @@ SOFTWARE.
 
 
 struct _win_st;
-using WINDOW = struct _win_st;
+using NCursesWindow = struct _win_st;
 
 
+class Window;
+using WindowPtr = std::shared_ptr<Window>;
 
-class Window
+class Window : public std::enable_shared_from_this<Window>
 {
 public:
     Window(uint16_t height = 0, uint16_t width = 0, uint16_t y = 0, uint16_t x = 0);
     virtual ~Window() = default;
+
+    void run_modal();
 
     virtual void resize(uint16_t height, uint16_t width);
     virtual void move(uint16_t y, uint16_t x);
@@ -64,8 +68,23 @@ public:
     uint16_t get_y() const;
     uint16_t get_x() const;
 
+    std::weak_ptr<Window> parent() const;
+    void set_parent(WindowPtr win);
+
+    virtual void add(WindowPtr win);
+    virtual void del(WindowPtr win);
+
+    template<class T, class ...Args>
+    typename std::enable_if_t<std::is_base_of_v<Window, T>, std::shared_ptr<T>> create(Args&& ...args)
+    {
+        auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
+        add(ptr);
+        return ptr;
+    }
+
 private:
     uint16_t _height, _width, _y, _x;
+    std::weak_ptr<Window> _parent;
 };
 
 
@@ -74,7 +93,6 @@ class CursesWindow : public Window
 {
 public:
     CursesWindow();
-    CursesWindow(const Window &rhs);
     CursesWindow(const CursesWindow &) = delete;
     CursesWindow &operator=(const CursesWindow &) = delete;
     ~CursesWindow();
@@ -85,10 +103,10 @@ public:
     void move(uint16_t y, uint16_t x) override;
     void paint() const override;
 
-    WINDOW *get_win();
+    NCursesWindow *get_win();
 
 protected:
-    WINDOW *win;
+    NCursesWindow *win;
 };
 
 
@@ -97,18 +115,20 @@ template <typename T>
 class Border : public T
 {
 public:
-    Border(std::shared_ptr<Window> window, uint16_t border_h = 1, uint16_t border_w = 1) :
-        T(*window), inner_window(std::move(window)), border_h(border_h), border_w(border_w)
+    Border(uint16_t border_h = 1, uint16_t border_w = 1) :
+        border_h(border_h), border_w(border_w)
     {
-        inner_window->move(inner_window->get_y() + border_h, inner_window->get_x() + border_w);
+
     }
 
     void resize(uint16_t height, uint16_t width) override
     {
         if (height != T::get_height() || width != T::get_width()) {
             T::resize(height, width);
-            inner_window->resize(std::max(0, static_cast<int32_t>(height) - border_h * 2),
-                                 std::max(0, static_cast<int32_t>(width)  - border_w * 2));
+            if (inner_window) {
+                inner_window->resize(std::max(0, static_cast<int32_t>(height) - border_h * 2),
+                                     std::max(0, static_cast<int32_t>(width)  - border_w * 2));
+            }
         }
     }
 
@@ -116,34 +136,55 @@ public:
     {
         if (y != T::get_y() || x != T::get_x()) {
             T::move(y, x);
-            inner_window->move(y + border_h, x + border_w);
+            if (inner_window) {
+                inner_window->move(y + border_h, x + border_w);
+            }
         }
     }
 
     void paint() const override
     {
         T::paint();
-        inner_window->paint();
+        if (inner_window) {
+            inner_window->paint();
+        }
     }
 
     bool process_key(uint16_t key) const override
     {
-        return inner_window->process_key(key);
+        return inner_window ? inner_window->process_key(key) : true;
     }
 
     bool process_symbol(char32_t ch) const override
     {
-        return inner_window->process_symbol(ch);
+        return inner_window ? inner_window->process_symbol(ch) : true;
+    }
+
+    void add(WindowPtr win) override
+    {
+        if ((inner_window = std::move(win))) {
+            inner_window->set_parent(T::shared_from_this());
+            inner_window->move(T::get_y() + border_h, T::get_x() + border_w);
+            inner_window->resize(std::max(0, static_cast<int32_t>(T::get_height()) - border_h * 2),
+                                 std::max(0, static_cast<int32_t>(T::get_width())  - border_w * 2));
+        }
+    }
+
+    void del(WindowPtr win) override
+    {
+        if (inner_window == win) {
+            inner_window = nullptr;
+        }
     }
 
 protected:
-    std::shared_ptr<Window> inner_window;
+    WindowPtr inner_window;
 
 private:
     uint16_t border_h, border_w;
 };
 
-using WindowBorder = Border<Window>;
+using SimpleBorder = Border<Window>;
 using CursesBorder = Border<CursesWindow>;
 
 
@@ -158,7 +199,39 @@ public:
 
     Layout(LayoutType type, uint16_t splitter_size = 0);
 
-    void add(std::shared_ptr<Window> window);
+    void resize(uint16_t height, uint16_t width) override;
+    void move(uint16_t y, uint16_t x) override;
+    void paint() const override;
+
+    bool process_key(uint16_t key) const override;
+    bool process_symbol(char32_t ch) const override;
+
+    void add(WindowPtr win) override;
+    void del(WindowPtr win) override;
+
+private:
+    void update_layout();
+    uint16_t get_size(Window &window) const;
+    uint16_t get_pos(Window &window) const;
+    void set_size(Window &window, uint16_t size) const;
+    void set_pos(Window &window, uint16_t pos) const;
+
+private:
+    LayoutType type;
+    std::vector<std::pair<WindowPtr, uint16_t>> windows;
+    uint16_t splitter_size;
+};
+
+
+
+class Screen : public Window
+{
+public:
+    Screen();
+    ~Screen();
+
+    void show_cursor(bool value = true);
+    void set_color(uint16_t color);
 
     void resize(uint16_t height, uint16_t width) override;
     void move(uint16_t y, uint16_t x) override;
@@ -167,39 +240,11 @@ public:
     bool process_key(uint16_t key) const override;
     bool process_symbol(char32_t ch) const override;
 
-private:
-    uint16_t get_size(Window &window) const;
-    uint16_t get_pos(Window &window) const;
-    void set_size(Window &window, uint16_t size) const;
-    void set_pos(Window &window, uint16_t pos) const;
+    void add(WindowPtr win) override;
+    void del(WindowPtr win) override;
 
 private:
-    LayoutType type;
-    std::vector<std::pair<std::shared_ptr<Window>, uint16_t>> windows;
-    uint16_t splitter_size;
-};
-
-
-
-class Screen
-{
-public:
-    Screen();
-    virtual ~Screen();
-
-    void exec();
-
-    void show_cursor(bool value = true);
-    void set_window(std::shared_ptr<Window> win);
-    void set_modal(std::shared_ptr<Window> win);
-    void set_color(uint16_t color);
-
-protected:
-    virtual void paint() const;
-
-private:
-    std::shared_ptr<Window> window;
-    std::shared_ptr<Window> modal;
+    std::vector<WindowPtr> windows;
 };
 
 
