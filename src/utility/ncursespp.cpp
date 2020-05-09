@@ -179,6 +179,11 @@ void Window::del(WindowPtr)
 
 }
 
+void Window::clear()
+{
+
+}
+
 
 
 CursesWindow::CursesWindow()
@@ -214,6 +219,12 @@ void CursesWindow::move(uint16_t y, uint16_t x)
 }
 
 void CursesWindow::paint() const
+{
+    wclear(win);
+    wnoutrefresh(win);
+}
+
+void CursesWindow::clear()
 {
     wclear(win);
     wnoutrefresh(win);
@@ -295,8 +306,16 @@ void Layout::del(WindowPtr win)
 {
     auto it = std::find_if(windows.begin(), windows.end(), [win](const auto &pair) { return pair.first == win; });
     if (it != windows.end()) {
+        it->first->set_parent(nullptr);
         windows.erase(it);
         update_layout();
+    }
+}
+
+void Layout::clear()
+{
+    for (auto it = windows.begin(); it != windows.end(); it = windows.erase(it)) {
+        it->first->set_parent(nullptr);
     }
 }
 
@@ -379,11 +398,13 @@ Screen::Screen()
 
 Screen::~Screen()
 {
-    windows.clear();
+    for (auto it = windows.begin(); it != windows.end(); it = windows.erase(it)) {
+        (*it)->set_parent(nullptr);
+    }
     keypad(stdscr, false);
     echo();
     nocbreak();
-    clear();
+    ::clear();
     endwin();
 }
 
@@ -418,7 +439,7 @@ void Screen::move(uint16_t y, uint16_t x)
 
 void Screen::paint() const
 {
-    clear();
+    ::clear();
     wnoutrefresh(stdscr);
     for (auto &win : windows) {
         win->paint();
@@ -463,5 +484,12 @@ void Screen::del(WindowPtr win)
     if (it != windows.end()) {
         (*it)->set_parent(nullptr);
         windows.erase(it);
+    }
+}
+
+void Screen::clear()
+{
+    for (auto it = windows.begin(); it != windows.end(); it = windows.erase(it)) {
+        (*it)->set_parent(nullptr);
     }
 }

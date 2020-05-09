@@ -83,6 +83,7 @@ public:
 
     virtual void add(WindowPtr win);
     virtual void del(WindowPtr win);
+    virtual void clear();
 
     template<class T, class ...Args>
     typename std::enable_if_t<std::is_base_of_v<Window, T>, std::shared_ptr<T>> create(Args&& ...args)
@@ -112,6 +113,8 @@ public:
     void resize(uint16_t height, uint16_t width) override;
     void move(uint16_t y, uint16_t x) override;
     void paint() const override;
+
+    void clear() override;
 
     NCursesWindowPtr *get_win();
 
@@ -183,6 +186,15 @@ public:
     void del(WindowPtr win) override
     {
         if (inner_window == win) {
+            inner_window->set_parent(nullptr);
+            inner_window = nullptr;
+        }
+    }
+
+    void clear() override
+    {
+        if (inner_window) {
+            inner_window->set_parent(nullptr);
             inner_window = nullptr;
         }
     }
@@ -218,6 +230,7 @@ public:
 
     void add(WindowPtr win) override;
     void del(WindowPtr win) override;
+    void clear() override;
 
 private:
     void update_layout();
@@ -254,6 +267,7 @@ public:
 
     void add(WindowPtr win) override;
     void del(WindowPtr win) override;
+    void clear() override;
 
 private:
     std::vector<WindowPtr> windows;
