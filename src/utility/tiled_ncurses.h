@@ -27,6 +27,8 @@ SOFTWARE.
 #define TILED_NCURSES_H
 
 #include <list>
+#include <vector>
+#include <string>
 
 
 #define COLOR_TRANSPARRENT  -1
@@ -97,6 +99,7 @@ protected:
     std::weak_ptr<Window> parent() const;
     virtual void add_window(WindowPtr win);
     virtual void remove_window(WindowPtr win);
+    WindowPtr get_top_window();
 
 private:
     uint16_t _height, _width, _y, _x;
@@ -333,6 +336,25 @@ private:
 
 using VerticalLayout = Layout<true>;
 using HorizontalLayout = Layout<false>;
+
+
+
+class VerticalListMenu : public CursesWindow
+{
+public:
+    using Callback = std::function<void(size_t)>;
+
+    VerticalListMenu(const std::vector<std::string> &list, Callback &&callback);
+    VerticalListMenu(std::vector<std::string> &&list, Callback &&callback);
+
+    void paint() const override;
+    uint8_t process_key(char32_t ch, bool is_symbol) override;
+
+private:
+    const std::vector<std::string> list;
+    const Callback callback;
+    size_t current_item = 0;
+};
 
 
 

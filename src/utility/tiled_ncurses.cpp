@@ -27,7 +27,6 @@ SOFTWARE.
 #include <ncurses.h>
 #include <locale.h>
 #include <mutex>
-#include <vector>
 #include "utf8_tools.h"
 
 
@@ -79,6 +78,7 @@ Window::Window(uint16_t height, uint16_t width, uint16_t y, uint16_t x) :
 
 void Window::run_modal()
 {
+    get_top_window()->paint();
     int key;
     utf8::decoder decoder;
     uint8_t res;
@@ -97,10 +97,7 @@ void Window::run_modal()
             int height, width;
             getmaxyx(stdscr, height, width);
             if (is_term_resized(width, height)) {
-                auto top = shared_from_this();
-                for (WindowPtr next; (next = top->parent().lock());) {
-                    top = next;
-                }
+                auto top = get_top_window();
                 top->resize(height, width);
                 resize_term(height, width);
                 top->paint();
@@ -185,6 +182,15 @@ void Window::remove_window(WindowPtr win)
     win->_parent.reset();
 }
 
+WindowPtr Window::get_top_window()
+{
+    auto top = shared_from_this();
+    for (WindowPtr next; (next = top->parent().lock());) {
+        top = next;
+    }
+    return top;
+}
+
 
 
 CursesWindow::CursesWindow()
@@ -228,6 +234,59 @@ void CursesWindow::paint() const
 NCursesWindow *CursesWindow::get_win()
 {
     return win;
+}
+
+
+
+VerticalListMenu::VerticalListMenu(const std::vector<std::string> &list, Callback &&callback) :
+    list(list), callback(std::move(callback))
+{
+}
+
+VerticalListMenu::VerticalListMenu(std::vector<std::string> &&list, VerticalListMenu::Callback &&callback) :
+    list(std::move(list)), callback(std::move(callback))
+{
+
+}
+
+void VerticalListMenu::paint() const
+{
+    wclear(win);
+    wmove(win, 0, 0);
+    for (size_t i = 0; i < list.size(); ++i) {
+        auto book = list[i];
+        book.resize(get_width(), ' ');
+        if (i == current_item) {
+            wattron(win, A_STANDOUT);
+        }
+        waddnstr(win, book.c_str(), book.size());
+        if (i == current_item) {
+            wattroff(win, A_STANDOUT);
+        }
+    }
+    wnoutrefresh(win);
+}
+
+uint8_t VerticalListMenu::process_key(char32_t ch, bool is_symbol)
+{
+    if (ch == 10 && is_symbol) {
+        callback(current_item);
+        close();
+    }
+    else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
+        if (current_item < list.size() - 1) {
+            ++current_item;
+        }
+    }
+    else if (ch == (is_symbol ? 'k' : KEY_UP)) {
+        if (current_item > 0) {
+            --current_item;
+        }
+    }
+    else {
+        return 0;
+    }
+    return PleasePaint;
 }
 
 

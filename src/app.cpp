@@ -39,41 +39,31 @@ void App::run()
 
     auto border = screen->create<SimpleBorder>(3, 4)->create<CursesBorder>();
     border->set_color(ColorScheme::Test3);
-    auto win = border->create<MainWindow>();
+    auto win = border->create<MainWindow>(screen);
 
-    screen->paint();
+//    win->run_modal();
 
-    win->run_modal();
-
-//    tst->set_color(ColorScheme::Test2);
-//    screen->paint();
-
-//    screen->run_modal();
+    screen->run_modal();
 }
 
 
 
-MainWindow::MainWindow() :
-    model(std::make_shared<CardModel>())
+MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
+    screen_ptr(screen), model(std::make_shared<CardModel>())
 {
-    list = model->get_kindle_booklist();
+    auto books = model->get_kindle_booklist();
+    screen->create<VerticalListMenu>(books, [this, &books](size_t item) {
+        txt = "selected: " + books.at(item);
+        if (auto screen = screen_ptr.lock()) {
+            screen->paint();
+        }
+    })->run_modal();
 }
 
 void MainWindow::paint() const
 {
     wclear(win);
-    wmove(win, 0, 0);
-    for (size_t i = 0; i < list.size(); ++i) {
-        auto book = list[i];
-        book.resize(get_width(), ' ');
-        if (i == current_item) {
-            wattron(win, A_STANDOUT);
-        }
-        waddnstr(win, book.c_str(), book.size());
-        if (i == current_item) {
-            wattroff(win, A_STANDOUT);
-        }
-    }
+    waddnstr(win, txt.c_str(), txt.size());
     wnoutrefresh(win);
 }
 
@@ -83,22 +73,6 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
         return PleaseExitModal;
     }
     uint8_t res = 0;
-    if (ch == 10 && is_symbol) {
-        close();
-        res |= PleasePaint;
-    }
-    else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
-        if (current_item < list.size() - 1) {
-            ++current_item;
-            res |= PleasePaint;
-        }
-    }
-    else if (ch == (is_symbol ? 'k' : KEY_UP)) {
-        if (current_item > 0) {
-            --current_item;
-            res |= PleasePaint;
-        }
-    }
     return res;
 }
 
