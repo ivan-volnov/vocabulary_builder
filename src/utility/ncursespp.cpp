@@ -145,7 +145,7 @@ void Window::close()
 {
     if (auto p = parent().lock()) {
         auto self = shared_from_this();
-        p->del(self);
+        p->remove_window(self);
     }
 }
 
@@ -174,12 +174,12 @@ std::weak_ptr<Window> Window::parent() const
     return _parent;
 }
 
-void Window::add(WindowPtr win)
+void Window::add_window(WindowPtr win)
 {
     win->_parent = shared_from_this();
 }
 
-void Window::del(WindowPtr win)
+void Window::remove_window(WindowPtr win)
 {
     win->_parent.reset();
 }
@@ -247,7 +247,7 @@ Screen::Screen()
 Screen::~Screen()
 {
     for (auto it = layers.begin(); it != layers.end(); it = layers.erase(it)) {
-        Window::del(*it);
+        Window::remove_window(*it);
     }
     keypad(stdscr, false);
     echo();
@@ -304,22 +304,22 @@ uint8_t Screen::process_key(char32_t ch, bool is_symbol)
     return res;
 }
 
-void Screen::add(WindowPtr win)
+void Screen::add_window(WindowPtr win)
 {
     auto it = std::find(layers.begin(), layers.end(), win);
     if (it == layers.end()) {
-        Window::add(win);
+        Window::add_window(win);
         win->move(0, 0);
         win->resize(get_height(), get_width());
         layers.push_back(std::move(win));
     }
 }
 
-void Screen::del(WindowPtr win)
+void Screen::remove_window(WindowPtr win)
 {
     auto it = std::find(layers.begin(), layers.end(), win);
     if (it != layers.end()) {
-        Window::del(win);
+        Window::remove_window(win);
         layers.erase(it);
     }
 }

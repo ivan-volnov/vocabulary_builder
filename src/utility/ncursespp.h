@@ -89,14 +89,14 @@ public:
     typename std::enable_if_t<std::is_base_of_v<Window, T>, std::shared_ptr<T>> create(Args&& ...args)
     {
         auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
-        add(ptr);
+        add_window(ptr);
         return ptr;
     }
 
 protected:
     std::weak_ptr<Window> parent() const;
-    virtual void add(WindowPtr win);
-    virtual void del(WindowPtr win);
+    virtual void add_window(WindowPtr win);
+    virtual void remove_window(WindowPtr win);
 
 private:
     uint16_t _height, _width, _y, _x;
@@ -141,8 +141,8 @@ public:
     {
         if (height != T::get_height() || width != T::get_width()) {
             T::resize(height, width);
-            if (inner_window) {
-                inner_window->resize(std::max(0, static_cast<int32_t>(height) - border_h * 2),
+            if (window) {
+                window->resize(std::max(0, static_cast<int32_t>(height) - border_h * 2),
                                      std::max(0, static_cast<int32_t>(width)  - border_w * 2));
             }
         }
@@ -152,8 +152,8 @@ public:
     {
         if (y != T::get_y() || x != T::get_x()) {
             T::move(y, x);
-            if (inner_window) {
-                inner_window->move(y + border_h, x + border_w);
+            if (window) {
+                window->move(y + border_h, x + border_w);
             }
         }
     }
@@ -161,36 +161,36 @@ public:
     void paint() const override
     {
         T::paint();
-        if (inner_window) {
-            inner_window->paint();
+        if (window) {
+            window->paint();
         }
     }
 
     uint8_t process_key(char32_t ch, bool is_symbol) override
     {
-        return inner_window ? inner_window->process_key(ch, is_symbol) : 0;
+        return window ? window->process_key(ch, is_symbol) : 0;
     }
 
 protected:
-    void add(WindowPtr win) override
+    void add_window(WindowPtr win) override
     {
-        if ((inner_window = std::move(win))) {
-            T::add(inner_window);
-            inner_window->move(T::get_y() + border_h, T::get_x() + border_w);
-            inner_window->resize(std::max(0, static_cast<int32_t>(T::get_height()) - border_h * 2),
+        if ((window = std::move(win))) {
+            T::add_window(window);
+            window->move(T::get_y() + border_h, T::get_x() + border_w);
+            window->resize(std::max(0, static_cast<int32_t>(T::get_height()) - border_h * 2),
                                  std::max(0, static_cast<int32_t>(T::get_width())  - border_w * 2));
         }
     }
 
-    void del(WindowPtr win) override
+    void remove_window(WindowPtr win) override
     {
-        if (inner_window == win) {
-            T::del(inner_window);
-            inner_window = nullptr;
+        if (window == win) {
+            T::remove_window(window);
+            window = nullptr;
         }
     }
 
-    WindowPtr inner_window;
+    WindowPtr window;
 
 private:
     uint16_t border_h, border_w;
@@ -252,20 +252,20 @@ public:
     }
 
 protected:
-    void add(WindowPtr win) override
+    void add_window(WindowPtr win) override
     {
         if (win) {
-            Window::add(win);
+            Window::add_window(win);
             tiles.push_back({ win, vertical ? win->get_height() : win->get_width() });
             update_layout();
         }
     }
 
-    void del(WindowPtr win) override
+    void remove_window(WindowPtr win) override
     {
         auto it = std::find_if(tiles.begin(), tiles.end(), [win](const auto &pair) { return pair.first == win; });
         if (it != tiles.end()) {
-            Window::del(win);
+            Window::remove_window(win);
             tiles.erase(it);
             update_layout();
         }
@@ -354,8 +354,8 @@ public:
     uint8_t process_key(char32_t ch, bool is_symbol) override;
 
 protected:
-    void add(WindowPtr win) override;
-    void del(WindowPtr win) override;
+    void add_window(WindowPtr win) override;
+    void remove_window(WindowPtr win) override;
 
 private:
     std::list<WindowPtr> layers;
