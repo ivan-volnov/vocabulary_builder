@@ -27,6 +27,7 @@ SOFTWARE.
 #include <ncurses.h>
 #include <locale.h>
 #include <mutex>
+#include <vector>
 #include "utf8_tools.h"
 
 
@@ -80,17 +81,15 @@ void Window::run_modal()
 {
     int key;
     utf8::decoder decoder;
+    uint8_t res;
     while (true) {
         if ((key = wgetch(stdscr)) < 0) {
             continue;
         }
+        res = 0;
         if (key <= 0xff) {
             if (decoder.decode_symbol(key)) {
-                if (!process_symbol(decoder.symbol())) {
-                    return;
-                }
-                paint();
-                doupdate();
+                res = process_symbol(decoder.symbol());
             }
         }
         else if (key == KEY_RESIZE) {
@@ -105,8 +104,16 @@ void Window::run_modal()
                 resize_term(height, width);
                 top->paint();
             }
+            continue;
         }
-        else if (key < KEY_MAX && !process_key(key)) {
+        else if (key < KEY_MAX) {
+            res = process_key(key);
+        }
+        if (res & PleasePaint) {
+            paint();
+            doupdate();
+        }
+        if (res & PleaseExitModal) {
             return;
         }
     }
@@ -129,14 +136,22 @@ void Window::paint() const
 
 }
 
-bool Window::process_key(uint16_t)
+uint8_t Window::process_key(uint16_t)
 {
-    return true;
+    return 0;
 }
 
-bool Window::process_symbol(char32_t)
+uint8_t Window::process_symbol(char32_t)
 {
-    return true;
+    return 0;
+}
+
+void Window::close()
+{
+    if (auto p = parent().lock()) {
+        auto self = shared_from_this();
+        p->del(self);
+    }
 }
 
 uint16_t Window::get_height() const
@@ -179,11 +194,6 @@ void Window::del(WindowPtr)
 
 }
 
-void Window::clear()
-{
-
-}
-
 
 
 CursesWindow::CursesWindow()
@@ -219,12 +229,6 @@ void CursesWindow::move(uint16_t y, uint16_t x)
 }
 
 void CursesWindow::paint() const
-{
-    wclear(win);
-    wnoutrefresh(win);
-}
-
-void CursesWindow::clear()
 {
     wclear(win);
     wnoutrefresh(win);
@@ -279,15 +283,15 @@ void Screen::set_color(const std::string &color)
 
 void Screen::resize(uint16_t height, uint16_t width)
 {
-    for (auto &win : windows) {
-        win->resize(height, width);
+    for (auto it = windows.begin(); it != windows.end();) {
+        (*it++)->resize(height, width);
     }
 }
 
 void Screen::move(uint16_t y, uint16_t x)
 {
-    for (auto &win : windows) {
-        win->move(y, x);
+    for (auto it = windows.begin(); it != windows.end();) {
+        (*it++)->move(y, x);
     }
 }
 
@@ -295,30 +299,28 @@ void Screen::paint() const
 {
     ::clear();
     wnoutrefresh(stdscr);
-    for (auto &win : windows) {
-        win->paint();
+    for (auto it = windows.begin(); it != windows.end();) {
+        (*it++)->paint();
     }
     doupdate();
 }
 
-bool Screen::process_key(uint16_t key)
+uint8_t Screen::process_key(uint16_t key)
 {
-    for (auto &win : windows) {
-        if (!win->process_key(key)) {
-            return false;
-        }
+    uint8_t res = 0;
+    for (auto it = windows.begin(); it != windows.end();) {
+        res |= (*it++)->process_key(key);
     }
-    return true;
+    return res;
 }
 
-bool Screen::process_symbol(char32_t ch)
+uint8_t Screen::process_symbol(char32_t ch)
 {
-    for (auto &win : windows) {
-        if (!win->process_symbol(ch)) {
-            return false;
-        }
+    uint8_t res = 0;
+    for (auto it = windows.begin(); it != windows.end();) {
+        res |= (*it++)->process_symbol(ch);
     }
-    return true;
+    return res;
 }
 
 void Screen::add(WindowPtr win)
@@ -338,12 +340,5 @@ void Screen::del(WindowPtr win)
     if (it != windows.end()) {
         (*it)->set_parent(nullptr);
         windows.erase(it);
-    }
-}
-
-void Screen::clear()
-{
-    for (auto it = windows.begin(); it != windows.end(); it = windows.erase(it)) {
-        (*it)->set_parent(nullptr);
     }
 }

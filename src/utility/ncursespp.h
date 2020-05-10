@@ -26,7 +26,7 @@ SOFTWARE.
 #ifndef CURSES_WINDOW_H
 #define CURSES_WINDOW_H
 
-#include <vector>
+#include <list>
 
 
 #define COLOR_TRANSPARRENT  -1
@@ -61,6 +61,13 @@ using WindowPtr = std::shared_ptr<Window>;
 class Window : public std::enable_shared_from_this<Window>
 {
 public:
+    enum ResultMasks : uint8_t
+    {
+        // set |    check &    toggle ^    reset & ~
+        PleasePaint             = 1 << 0,
+        PleaseExitModal         = 1 << 7,
+    };
+
     Window(uint16_t height = 0, uint16_t width = 0, uint16_t y = 0, uint16_t x = 0);
     virtual ~Window() = default;
 
@@ -70,8 +77,9 @@ public:
     virtual void move(uint16_t y, uint16_t x);
     virtual void paint() const;
 
-    virtual bool process_key(uint16_t key);
-    virtual bool process_symbol(char32_t ch);
+    virtual uint8_t process_key(uint16_t key);
+    virtual uint8_t process_symbol(char32_t ch);
+    virtual void close();
 
     uint16_t get_height() const;
     uint16_t get_width() const;
@@ -83,7 +91,6 @@ public:
 
     virtual void add(WindowPtr win);
     virtual void del(WindowPtr win);
-    virtual void clear();
 
     template<class T, class ...Args>
     typename std::enable_if_t<std::is_base_of_v<Window, T>, std::shared_ptr<T>> create(Args&& ...args)
@@ -113,8 +120,6 @@ public:
     void resize(uint16_t height, uint16_t width) override;
     void move(uint16_t y, uint16_t x) override;
     void paint() const override;
-
-    void clear() override;
 
     NCursesWindowPtr *get_win();
 
@@ -163,14 +168,14 @@ public:
         }
     }
 
-    bool process_key(uint16_t key) override
+    uint8_t process_key(uint16_t key) override
     {
-        return inner_window ? inner_window->process_key(key) : true;
+        return inner_window ? inner_window->process_key(key) : 0;
     }
 
-    bool process_symbol(char32_t ch) override
+    uint8_t process_symbol(char32_t ch) override
     {
-        return inner_window ? inner_window->process_symbol(ch) : true;
+        return inner_window ? inner_window->process_symbol(ch) : 0;
     }
 
     void add(WindowPtr win) override
@@ -186,14 +191,6 @@ public:
     void del(WindowPtr win) override
     {
         if (inner_window == win) {
-            inner_window->set_parent(nullptr);
-            inner_window = nullptr;
-        }
-    }
-
-    void clear() override
-    {
-        if (inner_window) {
             inner_window->set_parent(nullptr);
             inner_window = nullptr;
         }
@@ -238,38 +235,37 @@ public:
         }
         Window::move(y, x);
         auto pos = get_pos(*this);
-        for (auto &win : windows) {
-            win.first->move(y, x);
-            set_pos(*win.first, pos);
-            pos += get_size(*win.first) + splitter_size;
+        for (auto it = windows.begin(); it != windows.end();) {
+            auto win = (it++)->first;
+            win->move(y, x);
+            set_pos(*win, pos);
+            pos += get_size(*win) + splitter_size;
         }
     }
 
     void paint() const override
     {
-        for (auto &win : windows) {
-            win.first->paint();
+        for (auto it = windows.begin(); it != windows.end();) {
+            (it++)->first->paint();
         }
     }
 
-    bool process_key(uint16_t key) override
+    uint8_t process_key(uint16_t key) override
     {
-        for (auto &win : windows) {
-            if (!win.first->process_key(key)) {
-                return false;
-            }
+        uint8_t res = 0;
+        for (auto it = windows.begin(); it != windows.end();) {
+            res |= (it++)->first->process_key(key);
         }
-        return true;
+        return res;
     }
 
-    bool process_symbol(char32_t ch) override
+    uint8_t process_symbol(char32_t ch) override
     {
-        for (auto &win : windows) {
-            if (!win.first->process_symbol(ch)) {
-                return false;
-            }
+        uint8_t res = 0;
+        for (auto it = windows.begin(); it != windows.end();) {
+            res |= (it++)->first->process_symbol(ch);
         }
-        return true;
+        return res;
     }
 
     void add(WindowPtr win) override
@@ -291,13 +287,6 @@ public:
         }
     }
 
-    void clear() override
-    {
-        for (auto it = windows.begin(); it != windows.end(); it = windows.erase(it)) {
-            it->first->set_parent(nullptr);
-        }
-    }
-
 private:
     void update_layout()
     {
@@ -309,7 +298,8 @@ private:
             size -= std::min(size, static_cast<uint16_t>(splitter_size * (windows.size() - 1)));
         }
         uint16_t expanders = 0;
-        for (auto &win : windows) {
+        for (auto it = windows.begin(); it != windows.end();) {
+            auto win = *it++;
             if (!win.second) {
                 ++expanders;
             }
@@ -321,7 +311,8 @@ private:
         const auto segment = expanders ? size / expanders : 0;
         auto remainder = expanders ? size % expanders : size;
         auto pos = get_pos(*this);
-        for (auto &win : windows) {
+        for (auto it = windows.begin(); it != windows.end();) {
+            auto win = *it++;
             if (!win.second) {
                 set_size(*win.first, segment + remainder);
                 remainder = 0;
@@ -352,7 +343,7 @@ private:
     }
 
 private:
-    std::vector<std::pair<WindowPtr, uint16_t>> windows;
+    std::list<std::pair<WindowPtr, uint16_t>> windows;
     uint16_t splitter_size;
 };
 
@@ -376,15 +367,14 @@ public:
     void move(uint16_t y, uint16_t x) override;
     void paint() const override;
 
-    bool process_key(uint16_t key) override;
-    bool process_symbol(char32_t ch) override;
+    uint8_t process_key(uint16_t key) override;
+    uint8_t process_symbol(char32_t ch) override;
 
     void add(WindowPtr win) override;
     void del(WindowPtr win) override;
-    void clear() override;
 
 private:
-    std::vector<WindowPtr> windows;
+    std::list<WindowPtr> windows;
 };
 
 

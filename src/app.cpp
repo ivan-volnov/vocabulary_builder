@@ -31,8 +31,11 @@ App::App()
 void App::run()
 {
     auto layout = screen->create<SimpleBorder>()->create<HorizontalLayout>(1);
-    layout->create<CursesWindow>()->set_color(ColorScheme::Test);
+    auto tst = layout->create<CursesWindow>();
     layout->create<CursesWindow>()->set_color(ColorScheme::Test2);
+    layout->create<Footer>();
+
+    tst->set_color(ColorScheme::Test);
 
     auto border = screen->create<SimpleBorder>(3, 4)->create<CursesBorder>();
     border->set_color(ColorScheme::Test3);
@@ -41,6 +44,11 @@ void App::run()
     screen->paint();
 
     win->run_modal();
+
+    tst->set_color(ColorScheme::Test2);
+    screen->paint();
+
+    screen->run_modal();
 }
 
 
@@ -62,9 +70,12 @@ void MainWindow::paint() const
     wnoutrefresh(win);
 }
 
-bool MainWindow::process_symbol(char32_t ch)
+uint8_t MainWindow::process_symbol(char32_t ch)
 {
-    return ch != 27; // escape
+    if (ch == 27) { // escape
+        return PleaseExitModal;
+    }
+    return 0;
 }
 
 
@@ -72,6 +83,15 @@ bool MainWindow::process_symbol(char32_t ch)
 Footer::Footer()
 {
 
+}
+
+uint8_t Footer::process_symbol(char32_t ch)
+{
+    if (ch == 'q') {
+        close();
+        return PleasePaint;
+    }
+    return 0;
 }
 
 void Footer::paint() const
