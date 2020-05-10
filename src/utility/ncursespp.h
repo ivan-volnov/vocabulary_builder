@@ -85,12 +85,6 @@ public:
     uint16_t get_y() const;
     uint16_t get_x() const;
 
-    std::weak_ptr<Window> parent() const;
-    void set_parent(WindowPtr win);
-
-    virtual void add(WindowPtr win);
-    virtual void del(WindowPtr win);
-
     template<class T, class ...Args>
     typename std::enable_if_t<std::is_base_of_v<Window, T>, std::shared_ptr<T>> create(Args&& ...args)
     {
@@ -98,6 +92,11 @@ public:
         add(ptr);
         return ptr;
     }
+
+protected:
+    std::weak_ptr<Window> parent() const;
+    virtual void add(WindowPtr win);
+    virtual void del(WindowPtr win);
 
 private:
     uint16_t _height, _width, _y, _x;
@@ -172,10 +171,11 @@ public:
         return inner_window ? inner_window->process_key(ch, is_symbol) : 0;
     }
 
+protected:
     void add(WindowPtr win) override
     {
         if ((inner_window = std::move(win))) {
-            inner_window->set_parent(T::shared_from_this());
+            T::add(inner_window);
             inner_window->move(T::get_y() + border_h, T::get_x() + border_w);
             inner_window->resize(std::max(0, static_cast<int32_t>(T::get_height()) - border_h * 2),
                                  std::max(0, static_cast<int32_t>(T::get_width())  - border_w * 2));
@@ -185,12 +185,11 @@ public:
     void del(WindowPtr win) override
     {
         if (inner_window == win) {
-            inner_window->set_parent(nullptr);
+            T::del(inner_window);
             inner_window = nullptr;
         }
     }
 
-protected:
     WindowPtr inner_window;
 
 private:
@@ -206,7 +205,6 @@ template<bool vertical>
 class Layout: public Window
 {
 public:
-
     Layout(uint16_t splitter_size = 0) :
         splitter_size(splitter_size)
     {
@@ -253,11 +251,12 @@ public:
         return res;
     }
 
+protected:
     void add(WindowPtr win) override
     {
         if (win) {
+            Window::add(win);
             tiles.push_back({ win, vertical ? win->get_height() : win->get_width() });
-            win->set_parent(shared_from_this());
             update_layout();
         }
     }
@@ -266,7 +265,7 @@ public:
     {
         auto it = std::find_if(tiles.begin(), tiles.end(), [win](const auto &pair) { return pair.first == win; });
         if (it != tiles.end()) {
-            it->first->set_parent(nullptr);
+            Window::del(win);
             tiles.erase(it);
             update_layout();
         }
@@ -354,6 +353,7 @@ public:
 
     uint8_t process_key(char32_t ch, bool is_symbol) override;
 
+protected:
     void add(WindowPtr win) override;
     void del(WindowPtr win) override;
 

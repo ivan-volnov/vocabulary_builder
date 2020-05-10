@@ -174,19 +174,14 @@ std::weak_ptr<Window> Window::parent() const
     return _parent;
 }
 
-void Window::set_parent(WindowPtr win)
+void Window::add(WindowPtr win)
 {
-    _parent = win;
+    win->_parent = shared_from_this();
 }
 
-void Window::add(WindowPtr)
+void Window::del(WindowPtr win)
 {
-
-}
-
-void Window::del(WindowPtr)
-{
-
+    win->_parent.reset();
 }
 
 
@@ -252,7 +247,7 @@ Screen::Screen()
 Screen::~Screen()
 {
     for (auto it = layers.begin(); it != layers.end(); it = layers.erase(it)) {
-        (*it)->set_parent(nullptr);
+        Window::del(*it);
     }
     keypad(stdscr, false);
     echo();
@@ -313,9 +308,9 @@ void Screen::add(WindowPtr win)
 {
     auto it = std::find(layers.begin(), layers.end(), win);
     if (it == layers.end()) {
+        Window::add(win);
         win->move(0, 0);
         win->resize(get_height(), get_width());
-        win->set_parent(shared_from_this());
         layers.push_back(std::move(win));
     }
 }
@@ -324,7 +319,7 @@ void Screen::del(WindowPtr win)
 {
     auto it = std::find(layers.begin(), layers.end(), win);
     if (it != layers.end()) {
-        (*it)->set_parent(nullptr);
+        Window::del(win);
         layers.erase(it);
     }
 }
