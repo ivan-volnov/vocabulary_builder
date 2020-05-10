@@ -28,7 +28,7 @@ public:
 
 public:
     void paint() const override;
-    bool process_symbol(char32_t ch) const override;
+    bool process_symbol(char32_t ch) override;
 
 private:
     std::shared_ptr<CardModel> model;

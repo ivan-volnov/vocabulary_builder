@@ -129,12 +129,12 @@ void Window::paint() const
 
 }
 
-bool Window::process_key(uint16_t) const
+bool Window::process_key(uint16_t)
 {
     return true;
 }
 
-bool Window::process_symbol(char32_t) const
+bool Window::process_symbol(char32_t)
 {
     return true;
 }
@@ -301,7 +301,7 @@ void Screen::paint() const
     doupdate();
 }
 
-bool Screen::process_key(uint16_t key) const
+bool Screen::process_key(uint16_t key)
 {
     for (auto &win : windows) {
         if (!win->process_key(key)) {
@@ -311,7 +311,7 @@ bool Screen::process_key(uint16_t key) const
     return true;
 }
 
-bool Screen::process_symbol(char32_t ch) const
+bool Screen::process_symbol(char32_t ch)
 {
     for (auto &win : windows) {
         if (!win->process_symbol(ch)) {

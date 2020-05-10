@@ -62,7 +62,7 @@ void MainWindow::paint() const
     wnoutrefresh(win);
 }
 
-bool MainWindow::process_symbol(char32_t ch) const
+bool MainWindow::process_symbol(char32_t ch)
 {
     return ch != 27; // escape
 }
