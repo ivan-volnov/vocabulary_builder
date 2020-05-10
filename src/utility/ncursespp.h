@@ -51,7 +51,7 @@ SOFTWARE.
 
 
 struct _win_st;
-using NCursesWindowPtr = struct _win_st;
+using NCursesWindow = struct _win_st;
 
 class Window;
 using WindowPtr = std::shared_ptr<Window>;
@@ -120,10 +120,10 @@ public:
     void move(uint16_t y, uint16_t x) override;
     void paint() const override;
 
-    NCursesWindowPtr *get_win();
+    NCursesWindow *get_win();
 
 protected:
-    NCursesWindowPtr *win;
+    NCursesWindow *win;
 };
 
 
@@ -229,7 +229,7 @@ public:
         }
         Window::move(y, x);
         auto pos = get_pos(*this);
-        for (auto it = windows.begin(); it != windows.end();) {
+        for (auto it = tiles.begin(); it != tiles.end();) {
             auto win = (it++)->first;
             win->move(y, x);
             set_pos(*win, pos);
@@ -239,7 +239,7 @@ public:
 
     void paint() const override
     {
-        for (auto it = windows.begin(); it != windows.end();) {
+        for (auto it = tiles.begin(); it != tiles.end();) {
             (it++)->first->paint();
         }
     }
@@ -247,7 +247,7 @@ public:
     uint8_t process_key(char32_t ch, bool is_symbol) override
     {
         uint8_t res = 0;
-        for (auto it = windows.begin(); it != windows.end();) {
+        for (auto it = tiles.begin(); it != tiles.end();) {
             res |= (it++)->first->process_key(ch, is_symbol);
         }
         return res;
@@ -256,7 +256,7 @@ public:
     void add(WindowPtr win) override
     {
         if (win) {
-            windows.push_back({ win, vertical ? win->get_height() : win->get_width() });
+            tiles.push_back({ win, vertical ? win->get_height() : win->get_width() });
             win->set_parent(shared_from_this());
             update_layout();
         }
@@ -264,10 +264,10 @@ public:
 
     void del(WindowPtr win) override
     {
-        auto it = std::find_if(windows.begin(), windows.end(), [win](const auto &pair) { return pair.first == win; });
-        if (it != windows.end()) {
+        auto it = std::find_if(tiles.begin(), tiles.end(), [win](const auto &pair) { return pair.first == win; });
+        if (it != tiles.end()) {
             it->first->set_parent(nullptr);
-            windows.erase(it);
+            tiles.erase(it);
             update_layout();
         }
     }
@@ -275,15 +275,15 @@ public:
 private:
     void update_layout()
     {
-        if (windows.empty()) {
+        if (tiles.empty()) {
             return;
         }
         auto size = get_size(*this);
         if (splitter_size) {
-            size -= std::min(size, static_cast<uint16_t>(splitter_size * (windows.size() - 1)));
+            size -= std::min(size, static_cast<uint16_t>(splitter_size * (tiles.size() - 1)));
         }
         uint16_t expanders = 0;
-        for (auto it = windows.begin(); it != windows.end();) {
+        for (auto it = tiles.begin(); it != tiles.end();) {
             auto win = *it++;
             if (!win.second) {
                 ++expanders;
@@ -296,7 +296,7 @@ private:
         const auto segment = expanders ? size / expanders : 0;
         auto remainder = expanders ? size % expanders : size;
         auto pos = get_pos(*this);
-        for (auto it = windows.begin(); it != windows.end();) {
+        for (auto it = tiles.begin(); it != tiles.end();) {
             auto win = *it++;
             if (!win.second) {
                 set_size(*win.first, segment + remainder);
@@ -328,7 +328,7 @@ private:
     }
 
 private:
-    std::list<std::pair<WindowPtr, uint16_t>> windows;
+    std::list<std::pair<WindowPtr, uint16_t>> tiles;
     uint16_t splitter_size;
 };
 
@@ -358,7 +358,7 @@ public:
     void del(WindowPtr win) override;
 
 private:
-    std::list<WindowPtr> windows;
+    std::list<WindowPtr> layers;
 };
 
 

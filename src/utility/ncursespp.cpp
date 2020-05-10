@@ -229,7 +229,7 @@ void CursesWindow::paint() const
     wnoutrefresh(win);
 }
 
-NCursesWindowPtr *CursesWindow::get_win()
+NCursesWindow *CursesWindow::get_win()
 {
     return win;
 }
@@ -251,7 +251,7 @@ Screen::Screen()
 
 Screen::~Screen()
 {
-    for (auto it = windows.begin(); it != windows.end(); it = windows.erase(it)) {
+    for (auto it = layers.begin(); it != layers.end(); it = layers.erase(it)) {
         (*it)->set_parent(nullptr);
     }
     keypad(stdscr, false);
@@ -278,14 +278,14 @@ void Screen::set_color(const std::string &color)
 
 void Screen::resize(uint16_t height, uint16_t width)
 {
-    for (auto it = windows.begin(); it != windows.end();) {
+    for (auto it = layers.begin(); it != layers.end();) {
         (*it++)->resize(height, width);
     }
 }
 
 void Screen::move(uint16_t y, uint16_t x)
 {
-    for (auto it = windows.begin(); it != windows.end();) {
+    for (auto it = layers.begin(); it != layers.end();) {
         (*it++)->move(y, x);
     }
 }
@@ -294,7 +294,7 @@ void Screen::paint() const
 {
     ::clear();
     wnoutrefresh(stdscr);
-    for (auto it = windows.begin(); it != windows.end();) {
+    for (auto it = layers.begin(); it != layers.end();) {
         (*it++)->paint();
     }
     doupdate();
@@ -303,7 +303,7 @@ void Screen::paint() const
 uint8_t Screen::process_key(char32_t ch, bool is_symbol)
 {
     uint8_t res = 0;
-    for (auto it = windows.begin(); it != windows.end();) {
+    for (auto it = layers.begin(); it != layers.end();) {
         res |= (*it++)->process_key(ch, is_symbol);
     }
     return res;
@@ -311,20 +311,20 @@ uint8_t Screen::process_key(char32_t ch, bool is_symbol)
 
 void Screen::add(WindowPtr win)
 {
-    auto it = std::find(windows.begin(), windows.end(), win);
-    if (it == windows.end()) {
+    auto it = std::find(layers.begin(), layers.end(), win);
+    if (it == layers.end()) {
         win->move(0, 0);
         win->resize(get_height(), get_width());
         win->set_parent(shared_from_this());
-        windows.push_back(std::move(win));
+        layers.push_back(std::move(win));
     }
 }
 
 void Screen::del(WindowPtr win)
 {
-    auto it = std::find(windows.begin(), windows.end(), win);
-    if (it != windows.end()) {
+    auto it = std::find(layers.begin(), layers.end(), win);
+    if (it != layers.end()) {
         (*it)->set_parent(nullptr);
-        windows.erase(it);
+        layers.erase(it);
     }
 }
