@@ -254,12 +254,18 @@ void VerticalListMenu::paint() const
     wclear(win);
     wmove(win, 0, 0);
     for (size_t i = 0; i < list.size(); ++i) {
-        auto book = list[i];
-        book.resize(get_width(), ' ');
+        auto item = list[i];
+        auto len = utf8::strlen(item);
+        if (len > get_width()) {
+            item.erase(utf8::next(item.begin(), item.end(), get_width() - 1), std::prev(item.end()));
+        }
+        else if (len < get_width()) {
+            item.append(get_width() - len, ' ');
+        }
         if (i == current_item) {
             wattron(win, A_STANDOUT);
         }
-        waddnstr(win, book.c_str(), book.size());
+        waddnstr(win, item.c_str(), item.size());
         if (i == current_item) {
             wattroff(win, A_STANDOUT);
         }
