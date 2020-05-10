@@ -77,8 +77,7 @@ public:
     virtual void move(uint16_t y, uint16_t x);
     virtual void paint() const;
 
-    virtual uint8_t process_key(uint16_t key);
-    virtual uint8_t process_symbol(char32_t ch);
+    virtual uint8_t process_key(char32_t ch, bool is_symbol);
     virtual void close();
 
     uint16_t get_height() const;
@@ -168,14 +167,9 @@ public:
         }
     }
 
-    uint8_t process_key(uint16_t key) override
+    uint8_t process_key(char32_t ch, bool is_symbol) override
     {
-        return inner_window ? inner_window->process_key(key) : 0;
-    }
-
-    uint8_t process_symbol(char32_t ch) override
-    {
-        return inner_window ? inner_window->process_symbol(ch) : 0;
+        return inner_window ? inner_window->process_key(ch, is_symbol) : 0;
     }
 
     void add(WindowPtr win) override
@@ -250,20 +244,11 @@ public:
         }
     }
 
-    uint8_t process_key(uint16_t key) override
+    uint8_t process_key(char32_t ch, bool is_symbol) override
     {
         uint8_t res = 0;
         for (auto it = windows.begin(); it != windows.end();) {
-            res |= (it++)->first->process_key(key);
-        }
-        return res;
-    }
-
-    uint8_t process_symbol(char32_t ch) override
-    {
-        uint8_t res = 0;
-        for (auto it = windows.begin(); it != windows.end();) {
-            res |= (it++)->first->process_symbol(ch);
+            res |= (it++)->first->process_key(ch, is_symbol);
         }
         return res;
     }
@@ -367,8 +352,7 @@ public:
     void move(uint16_t y, uint16_t x) override;
     void paint() const override;
 
-    uint8_t process_key(uint16_t key) override;
-    uint8_t process_symbol(char32_t ch) override;
+    uint8_t process_key(char32_t ch, bool is_symbol) override;
 
     void add(WindowPtr win) override;
     void del(WindowPtr win) override;

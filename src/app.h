@@ -28,7 +28,7 @@ public:
 
 public:
     void paint() const override;
-    uint8_t process_symbol(char32_t ch) override;
+    uint8_t process_key(char32_t ch, bool is_symbol) override;
 
 private:
     std::shared_ptr<CardModel> model;
@@ -41,7 +41,7 @@ class Footer : public CursesWindow
 public:
     Footer();
 
-    uint8_t process_symbol(char32_t ch) override;
+    uint8_t process_key(char32_t ch, bool is_symbol) override;
 
 public:
     void paint() const override;

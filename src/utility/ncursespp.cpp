@@ -89,7 +89,7 @@ void Window::run_modal()
         res = 0;
         if (key <= 0xff) {
             if (decoder.decode_symbol(key)) {
-                res = process_symbol(decoder.symbol());
+                res = process_key(decoder.symbol(), true);
             }
         }
         else if (key == KEY_RESIZE) {
@@ -107,7 +107,7 @@ void Window::run_modal()
             continue;
         }
         else if (key < KEY_MAX) {
-            res = process_key(key);
+            res = process_key(key, false);
         }
         if (res & PleasePaint) {
             paint();
@@ -136,12 +136,7 @@ void Window::paint() const
 
 }
 
-uint8_t Window::process_key(uint16_t)
-{
-    return 0;
-}
-
-uint8_t Window::process_symbol(char32_t)
+uint8_t Window::process_key(char32_t, bool)
 {
     return 0;
 }
@@ -305,20 +300,11 @@ void Screen::paint() const
     doupdate();
 }
 
-uint8_t Screen::process_key(uint16_t key)
+uint8_t Screen::process_key(char32_t ch, bool is_symbol)
 {
     uint8_t res = 0;
     for (auto it = windows.begin(); it != windows.end();) {
-        res |= (*it++)->process_key(key);
-    }
-    return res;
-}
-
-uint8_t Screen::process_symbol(char32_t ch)
-{
-    uint8_t res = 0;
-    for (auto it = windows.begin(); it != windows.end();) {
-        res |= (*it++)->process_symbol(ch);
+        res |= (*it++)->process_key(ch, is_symbol);
     }
     return res;
 }

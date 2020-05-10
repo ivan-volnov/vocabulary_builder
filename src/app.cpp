@@ -70,9 +70,9 @@ void MainWindow::paint() const
     wnoutrefresh(win);
 }
 
-uint8_t MainWindow::process_symbol(char32_t ch)
+uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
 {
-    if (ch == 27) { // escape
+    if (is_symbol && ch == 27) { // escape
         return PleaseExitModal;
     }
     return 0;
@@ -85,9 +85,9 @@ Footer::Footer()
 
 }
 
-uint8_t Footer::process_symbol(char32_t ch)
+uint8_t Footer::process_key(char32_t ch, bool is_symbol)
 {
-    if (ch == 'q') {
+    if (is_symbol && ch == 'q') {
         close();
         return PleasePaint;
     }
