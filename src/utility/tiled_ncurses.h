@@ -23,8 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef CURSES_WINDOW_H
-#define CURSES_WINDOW_H
+#ifndef TILED_NCURSES_H
+#define TILED_NCURSES_H
 
 #include <list>
 
@@ -362,4 +362,4 @@ private:
 };
 
 
-#endif // CURSES_WINDOW_H
+#endif // TILED_NCURSES_H
