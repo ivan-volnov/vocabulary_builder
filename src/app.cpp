@@ -45,10 +45,10 @@ void App::run()
 
     win->run_modal();
 
-    tst->set_color(ColorScheme::Test2);
-    screen->paint();
+//    tst->set_color(ColorScheme::Test2);
+//    screen->paint();
 
-    screen->run_modal();
+//    screen->run_modal();
 }
 
 
@@ -56,16 +56,23 @@ void App::run()
 MainWindow::MainWindow() :
     model(std::make_shared<CardModel>())
 {
-
+    list = model->get_kindle_booklist();
 }
 
 void MainWindow::paint() const
 {
     wclear(win);
     wmove(win, 0, 0);
-    for (const auto &book : model->get_kindle_booklist()) {
+    for (size_t i = 0; i < list.size(); ++i) {
+        auto book = list[i];
+        book.resize(get_width(), ' ');
+        if (i == current_item) {
+            wattron(win, A_STANDOUT);
+        }
         waddnstr(win, book.c_str(), book.size());
-        waddch(win, '\n');
+        if (i == current_item) {
+            wattroff(win, A_STANDOUT);
+        }
     }
     wnoutrefresh(win);
 }
@@ -75,7 +82,24 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
     if (is_symbol && ch == 27) { // escape
         return PleaseExitModal;
     }
-    return 0;
+    uint8_t res = 0;
+    if (ch == 10 && is_symbol) {
+        close();
+        res |= PleasePaint;
+    }
+    else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
+        if (current_item < list.size() - 1) {
+            ++current_item;
+            res |= PleasePaint;
+        }
+    }
+    else if (ch == (is_symbol ? 'k' : KEY_UP)) {
+        if (current_item > 0) {
+            --current_item;
+            res |= PleasePaint;
+        }
+    }
+    return res;
 }
 
 
@@ -87,6 +111,9 @@ Footer::Footer()
 
 uint8_t Footer::process_key(char32_t ch, bool is_symbol)
 {
+    if (is_symbol && ch == 27) { // escape
+        return PleaseExitModal;
+    }
     if (is_symbol && ch == 'q') {
         close();
         return PleasePaint;

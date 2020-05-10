@@ -2,6 +2,8 @@
 #define APP_H
 
 #include "utility/ncursespp.h"
+#include <vector>
+
 
 class CardModel;
 
@@ -32,6 +34,8 @@ public:
 
 private:
     std::shared_ptr<CardModel> model;
+    std::vector<std::string> list;
+    size_t current_item = 0;
 };
 
 

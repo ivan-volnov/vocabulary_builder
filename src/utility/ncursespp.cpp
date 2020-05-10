@@ -82,7 +82,8 @@ void Window::run_modal()
     int key;
     utf8::decoder decoder;
     uint8_t res;
-    while (true) {
+    const bool parent_state = _parent.expired();
+    while (parent_state || !_parent.expired()) {
         if ((key = wgetch(stdscr)) < 0) {
             continue;
         }
