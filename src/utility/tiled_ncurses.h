@@ -342,17 +342,17 @@ using HorizontalLayout = Layout<false>;
 class VerticalListMenu : public CursesWindow
 {
 public:
-    using Callback = std::function<void(size_t)>;
-
-    VerticalListMenu(const std::vector<std::string> &list, Callback &&callback);
-    VerticalListMenu(std::vector<std::string> &&list, Callback &&callback);
+    VerticalListMenu(const std::vector<std::string> &list);
+    VerticalListMenu(std::vector<std::string> &&list);
 
     void paint() const override;
     uint8_t process_key(char32_t ch, bool is_symbol) override;
 
+    size_t get_item_idx();
+    std::string get_item_string();
+
 private:
     const std::vector<std::string> list;
-    const Callback callback;
     size_t current_item = 0;
 };
 

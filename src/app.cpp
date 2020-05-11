@@ -51,13 +51,9 @@ void App::run()
 MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
     screen_ptr(screen), model(std::make_shared<CardModel>())
 {
-    auto books = model->get_kindle_booklist();
-    screen->create<VerticalListMenu>(books, [this, &books](size_t item) {
-        txt = "selected: " + books.at(item);
-        if (auto screen = screen_ptr.lock()) {
-            screen->paint();
-        }
-    })->run_modal();
+    auto menu = screen->create<VerticalListMenu>(model->get_kindle_booklist());
+    menu->run_modal();
+    txt = "selected: " + menu->get_item_string();
 }
 
 void MainWindow::paint() const

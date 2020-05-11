@@ -238,13 +238,13 @@ NCursesWindow *CursesWindow::get_win()
 
 
 
-VerticalListMenu::VerticalListMenu(const std::vector<std::string> &list, Callback &&callback) :
-    list(list), callback(std::move(callback))
+VerticalListMenu::VerticalListMenu(const std::vector<std::string> &list) :
+    list(list)
 {
 }
 
-VerticalListMenu::VerticalListMenu(std::vector<std::string> &&list, VerticalListMenu::Callback &&callback) :
-    list(std::move(list)), callback(std::move(callback))
+VerticalListMenu::VerticalListMenu(std::vector<std::string> &&list) :
+    list(std::move(list))
 {
 
 }
@@ -270,7 +270,6 @@ void VerticalListMenu::paint() const
 uint8_t VerticalListMenu::process_key(char32_t ch, bool is_symbol)
 {
     if (ch == 10 && is_symbol) {
-        callback(current_item);
         close();
     }
     else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
@@ -287,6 +286,16 @@ uint8_t VerticalListMenu::process_key(char32_t ch, bool is_symbol)
         return 0;
     }
     return PleasePaint;
+}
+
+size_t VerticalListMenu::get_item_idx()
+{
+    return current_item;
+}
+
+std::string VerticalListMenu::get_item_string()
+{
+    return list.at(current_item);
 }
 
 
