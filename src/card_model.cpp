@@ -10,7 +10,7 @@ CardModel::CardModel()
     if (!std::filesystem::exists(db_filepath)) {
         throw std::runtime_error("Please connect your Kindle via USB cable first");
     }
-    database = SqliteDatabase::open(db_filepath);
+    database = SqliteDatabase::open_read_only(db_filepath);
 }
 
 std::vector<std::string> CardModel::get_kindle_booklist() const
