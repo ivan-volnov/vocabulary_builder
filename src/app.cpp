@@ -53,7 +53,7 @@ MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
 {
     auto menu = screen->create<VerticalListMenu>(model->get_kindle_booklist());
     menu->run_modal();
-    txt = "selected: " + menu->get_item_string();
+    txt = menu->is_cancelled() ? "selected: none" : "selected: " + menu->get_item_string();
 }
 
 void MainWindow::paint() const

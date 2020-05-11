@@ -348,12 +348,14 @@ public:
     void paint() const override;
     uint8_t process_key(char32_t ch, bool is_symbol) override;
 
-    size_t get_item_idx();
-    std::string get_item_string();
+    bool is_cancelled() const;
+    size_t get_item_idx() const;
+    std::string get_item_string() const;
 
 private:
     const std::vector<std::string> list;
     size_t current_item = 0;
+    bool cancelled = false;
 };
 
 

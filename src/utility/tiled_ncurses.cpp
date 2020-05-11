@@ -269,7 +269,11 @@ void VerticalListMenu::paint() const
 
 uint8_t VerticalListMenu::process_key(char32_t ch, bool is_symbol)
 {
-    if (ch == 10 && is_symbol) {
+    if (ch == 10 && is_symbol) { // enter
+        close();
+    }
+    else if (ch == 27 && is_symbol) { // escape
+        cancelled = true;
         close();
     }
     else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
@@ -288,12 +292,17 @@ uint8_t VerticalListMenu::process_key(char32_t ch, bool is_symbol)
     return PleasePaint;
 }
 
-size_t VerticalListMenu::get_item_idx()
+bool VerticalListMenu::is_cancelled() const
+{
+    return cancelled;
+}
+
+size_t VerticalListMenu::get_item_idx() const
 {
     return current_item;
 }
 
-std::string VerticalListMenu::get_item_string()
+std::string VerticalListMenu::get_item_string() const
 {
     return list.at(current_item);
 }
