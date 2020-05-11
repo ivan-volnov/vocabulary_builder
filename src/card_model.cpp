@@ -1,5 +1,6 @@
 #include "card_model.h"
 #include "sqlite_database/sqlite_database.h"
+#include "utility/anki_client.h"
 #include "config.h"
 
 
@@ -26,6 +27,7 @@ std::vector<std::string> CardModel::get_kindle_booklist() const
 
 void CardModel::load_from_kindle(const std::string &book)
 {
+    AnkiClient anki;
     auto sql = database->create_query();
     sql << "SELECT DISTINCT w.stem\n"
            "FROM WORDS w\n"
@@ -33,8 +35,17 @@ void CardModel::load_from_kindle(const std::string &book)
            "JOIN BOOK_INFO b ON l.book_key = b.id\n"
            "WHERE b.title = ?\n";
     sql.bind(book);
+    std::vector<uint64_t> ids;
     while (sql.step()) {
-        cards.push_back(sql.get_string());
+        auto word = sql.get_string();
+        auto note = anki.request("findNotes", {{"query", "front:\"" + word + "\""}});
+        if (note.empty()) {
+            cards.push_back(std::move(word));
+        }
+        ids.insert(ids.end(), note.begin(), note.end());
+    }
+    if (!ids.empty()) {
+        anki.request("addTags", {{"notes", ids}, {"tags", "kindle"}});
     }
 }
 
