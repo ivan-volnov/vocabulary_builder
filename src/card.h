@@ -7,6 +7,12 @@
 class Card
 {
 public:
+    Card(std::string &&front) :
+        front(std::move(front))
+    {
+
+    }
+
     Card(const std::string &front, const std::string &back) :
         front(front), back(back)
     {

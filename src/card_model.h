@@ -16,6 +16,7 @@ public:
     std::vector<std::string> get_kindle_booklist() const;
     void load_from_kindle(const std::string &book);
 
+    size_t size() const;
 
 private:
     std::vector<Card> cards;

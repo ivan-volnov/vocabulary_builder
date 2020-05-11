@@ -53,7 +53,11 @@ MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
 {
     auto menu = screen->create<VerticalListMenu>(model->get_kindle_booklist());
     menu->run_modal();
-    txt = menu->is_cancelled() ? "selected: none" : "selected: " + menu->get_item_string();
+    if (menu->is_cancelled()) {
+        throw std::runtime_error("You must select a book first");
+    }
+    model->load_from_kindle(menu->get_item_string());
+    txt = "selected: " + menu->get_item_string() + "\nloaded: " + std::to_string(model->size()) + " cards";
 }
 
 void MainWindow::paint() const
