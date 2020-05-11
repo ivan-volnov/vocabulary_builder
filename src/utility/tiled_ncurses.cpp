@@ -238,30 +238,46 @@ NCursesWindow *CursesWindow::get_win()
 
 
 
-VerticalListMenu::VerticalListMenu(const std::vector<std::string> &list) :
-    list(list)
+VerticalListMenu::VerticalListMenu(const std::vector<std::string> &list, uint16_t scrolloff) :
+    list(list), scrolloff(scrolloff)
 {
 }
 
-VerticalListMenu::VerticalListMenu(std::vector<std::string> &&list) :
-    list(std::move(list))
+VerticalListMenu::VerticalListMenu(std::vector<std::string> &&list, uint16_t scrolloff) :
+    list(std::move(list)), scrolloff(scrolloff)
 {
 
+}
+
+void VerticalListMenu::resize(uint16_t height, uint16_t width)
+{
+    CursesWindow::resize(height, width);
+    ssize_t diff;
+    if (height <= list.size() && (diff = screen_offset + height - list.size()) > 0) {
+        cursor_offset += diff;
+        screen_offset -= diff;
+    }
+    else if ((diff = cursor_offset + 1 - height) > 0) {
+        cursor_offset -= diff;
+        screen_offset += diff;
+    }
 }
 
 void VerticalListMenu::paint() const
 {
     wclear(win);
     wmove(win, 0, 0);
-    for (size_t i = 0; i < list.size(); ++i) {
-        auto item = list[i];
+    const auto lines = std::min(static_cast<size_t>(get_height()), list.size());
+    for (size_t i = 0; i < lines; ++i) {
+        auto item = list.at(screen_offset + i);
         utf8::resize(item, get_width(), ' ');
-        if (i == current_item) {
+        if (i == cursor_offset) {
             wattron(win, A_STANDOUT);
-        }
-        waddnstr(win, item.c_str(), item.size());
-        if (i == current_item) {
+            waddnstr(win, item.c_str(), item.size());
             wattroff(win, A_STANDOUT);
+        }
+        else {
+            waddnstr(win, item.c_str(), item.size());
         }
     }
     wnoutrefresh(win);
@@ -276,14 +292,27 @@ uint8_t VerticalListMenu::process_key(char32_t ch, bool is_symbol)
         cancelled = true;
         close();
     }
-    else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
-        if (current_item < list.size() - 1) {
-            ++current_item;
+    else if (ch == (is_symbol ? 'k' : KEY_UP)) {
+        if (cursor_offset > scrolloff) {
+            --cursor_offset;
+        }
+        else if (screen_offset > 0) {
+            --screen_offset;
+        }
+        else if (cursor_offset > 0) {
+            --cursor_offset;
         }
     }
-    else if (ch == (is_symbol ? 'k' : KEY_UP)) {
-        if (current_item > 0) {
-            --current_item;
+    else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
+        const auto max_line = std::min(static_cast<size_t>(get_height()), list.size());
+        if (cursor_offset + scrolloff + 1 < max_line) {
+            ++cursor_offset;
+        }
+        else if (screen_offset + get_height() < list.size()) {
+            ++screen_offset;
+        }
+        else if (cursor_offset + 1 < max_line) {
+            ++cursor_offset;
         }
     }
     else {
@@ -299,12 +328,12 @@ bool VerticalListMenu::is_cancelled() const
 
 size_t VerticalListMenu::get_item_idx() const
 {
-    return current_item;
+    return screen_offset + cursor_offset;
 }
 
 std::string VerticalListMenu::get_item_string() const
 {
-    return list.at(current_item);
+    return list.at(get_item_idx());
 }
 
 

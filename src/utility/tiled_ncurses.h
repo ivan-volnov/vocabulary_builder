@@ -342,9 +342,10 @@ using HorizontalLayout = Layout<false>;
 class VerticalListMenu : public CursesWindow
 {
 public:
-    VerticalListMenu(const std::vector<std::string> &list);
-    VerticalListMenu(std::vector<std::string> &&list);
+    VerticalListMenu(const std::vector<std::string> &list, uint16_t scrolloff = 2);
+    VerticalListMenu(std::vector<std::string> &&list, uint16_t scrolloff = 2);
 
+    void resize(uint16_t height, uint16_t width) override;
     void paint() const override;
     uint8_t process_key(char32_t ch, bool is_symbol) override;
 
@@ -354,7 +355,9 @@ public:
 
 private:
     const std::vector<std::string> list;
-    size_t current_item = 0;
+    size_t screen_offset = 0;
+    uint16_t cursor_offset = 0;
+    uint16_t scrolloff;
     bool cancelled = false;
 };
 
