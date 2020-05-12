@@ -10,7 +10,7 @@
 
 
 CardModel::CardModel() :
-    speech(std::make_shared<SpeechEngine>()), cambridge_dictionary("english-russian")
+    cambridge_dictionary("english-russian")
 {
     const auto db_filepath = Config::instance().get_kindle_db_filepath();
     if (!std::filesystem::exists(db_filepath)) {
@@ -18,6 +18,8 @@ CardModel::CardModel() :
     }
     kindle_db = SqliteDatabase::open_read_only(db_filepath);
     vocabulary_profile_db = SqliteDatabase::open_read_only(Config::instance().get_vocabulary_profile_filepath());
+    speech = std::make_shared<SpeechEngine>();
+    anki = std::make_shared<AnkiClient>();
 }
 
 std::vector<std::string> CardModel::get_kindle_booklist() const
@@ -34,7 +36,6 @@ std::vector<std::string> CardModel::get_kindle_booklist() const
 
 void CardModel::load_from_kindle(const std::string &book)
 {
-    AnkiClient anki;
     auto sql = kindle_db->create_query();
     sql << "SELECT DISTINCT w.stem\n"
            "FROM WORDS w\n"
@@ -45,7 +46,7 @@ void CardModel::load_from_kindle(const std::string &book)
     std::unordered_set<uint64_t> ids;
     while (sql.step()) {
         auto word = sql.get_string();
-        auto note = anki.request("findNotes", {{"query", "front:\"" + word + "\""}});
+        auto note = anki->request("findNotes", {{"query", "front:\"" + word + "\" -tag:vb_beta"}});
         if (note.empty()) {
             auto pair = get_word_info(word);
             cards.emplace_back(std::move(word), std::move(pair.first), std::move(pair.second));
@@ -53,7 +54,19 @@ void CardModel::load_from_kindle(const std::string &book)
         ids.insert(note.begin(), note.end());
     }
     if (!ids.empty()) {
-        anki.request("addTags", {{"notes", ids}, {"tags", "kindle"}});
+        anki->request("addTags", {{"notes", ids}, {"tags", "kindle"}});
+    }
+    auto notes = anki->request("findNotes", {{"query", "tag:vb_beta"}});
+    notes = anki->request("notesInfo", {{"notes", notes}});
+    for (const auto &note : notes) {
+        const auto front = note.at("fields").at("Front").at("value").get<std::string>();
+        for (auto &card : cards) {
+            if (card.get_front() == front) {
+                card.set_anki_note_id(note.at("noteId").get<uint64_t>());
+                card.set_back(note.at("fields").at("Back").at("value").get<std::string>());
+                break;
+            }
+        }
     }
 }
 
@@ -115,4 +128,31 @@ void CardModel::say(const std::string &word) const
         txt = "read, red, red";
     }
     speech->say(txt);
+}
+
+void CardModel::anki_add_card(size_t idx)
+{
+    auto &card = cards.at(idx);
+    assert(!card.get_levels().empty());
+    const auto word = card.get_front();
+    if (anki->request("findNotes", {{"query", "front:\"" + word + "\""}}).empty()) {
+        auto tags = card.get_levels();
+        tags.insert("kindle");
+        tags.insert("vb_beta");
+        auto note = anki->request("addNotes", {{"notes", {{
+            {"deckName", "En::Vocabulary Profile::" + *card.get_levels().begin()},
+            {"modelName", "Main en-GB"},
+            {"fields", {
+                 {"Front", word},
+                 {"PoS", card.get_pos_string()}}},
+            {"tags", tags},
+        }}}});
+        card.set_anki_note_id(note.at(0).get<uint64_t>());
+    }
+    anki_open_browser(idx);
+}
+
+void CardModel::anki_open_browser(size_t idx) const
+{
+    anki->request("guiBrowse", {{"query", "front:\"" + cards.at(idx).get_front() + "\""}});
 }

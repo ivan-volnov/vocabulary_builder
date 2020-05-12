@@ -19,7 +19,7 @@ nlohmann::json AnkiClient::request(const std::string &action, const nlohmann::js
         throw std::runtime_error("AnkiConnect error: " + response["error"].get<std::string>());
     }
     if (action == "addNotes") {
-        for (const auto &card : response) {
+        for (const auto &card : response.at("result")) {
             if (card.is_null()) {
                 throw std::runtime_error("AnkiConnect error: can't create a card");
             }

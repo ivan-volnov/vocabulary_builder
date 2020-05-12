@@ -58,7 +58,7 @@ void MainWindow::paint() const
 
     print("Front : " + card.get_front());
     print("Back  : " + card.get_back());
-    print("Pos   : " + card.get_pos_string());
+    print("PoS   : " + card.get_pos_string());
     print("Level : " + card.get_level_string());
 
     wmove(win, get_height() - 1, 0);
@@ -72,7 +72,14 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
     if (ch == 27 && is_symbol) { // escape
         return PleaseExitModal;
     }
-    else if (ch == 10 && is_symbol) { // enter
+    else if (ch == 'a' && is_symbol) {
+        model->anki_add_card(current_card_idx);
+    }
+    else if (ch == 'e' && is_symbol) {
+        model->anki_open_browser(current_card_idx);
+    }
+    else if (ch == 'r' && is_symbol) {
+        // reload
     }
     else if (ch == (is_symbol ? 'k' : KEY_UP)) {
         if (current_card_idx > 0) {

@@ -27,11 +27,26 @@ public:
         back = std::forward<T>(value);
     }
 
+    template<typename T>
+    void set_levels(T &&value)
+    {
+        levels = std::forward<T>(value);
+    }
+
+    template<typename T>
+    void set_pos(T &&value)
+    {
+        pos = std::forward<T>(value);
+    }
+
+    void set_anki_note_id(uint64_t id);
+
 private:
-    std::string front;
+    const std::string front;
     std::string back;
     string_set levels;
     string_set pos;
+    uint64_t anki_note_id = 0;
 };
 
 

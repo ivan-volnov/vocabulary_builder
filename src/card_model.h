@@ -7,6 +7,7 @@
 
 class SqliteDatabase;
 class SpeechEngine;
+class AnkiClient;
 
 
 class CardModel
@@ -26,11 +27,15 @@ public:
     void look_up_in_safari(const std::string &word);
     void say(const std::string &word) const;
 
+    void anki_add_card(size_t idx);
+    void anki_open_browser(size_t idx) const;
+
 private:
     std::vector<Card> cards;
     std::shared_ptr<SqliteDatabase> kindle_db;
     std::shared_ptr<SqliteDatabase> vocabulary_profile_db;
     std::shared_ptr<SpeechEngine> speech;
+    std::shared_ptr<AnkiClient> anki;
     std::string last_safari_word;
     std::string cambridge_dictionary;
 };

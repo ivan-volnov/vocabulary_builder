@@ -30,10 +30,15 @@ string_set Card::get_pos() const
 
 std::string Card::get_level_string() const
 {
-    return tools::join<std::string>(levels, ',');
+    return tools::join<std::string>(levels, ", ");
 }
 
 std::string Card::get_pos_string() const
 {
-    return tools::join<std::string>(pos, ',');
+    return tools::join<std::string>(pos, ", ");
+}
+
+void Card::set_anki_note_id(uint64_t id)
+{
+    anki_note_id = id;
 }
