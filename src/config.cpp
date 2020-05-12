@@ -47,9 +47,9 @@ std::filesystem::path Config::get_backup_path() const
     return get_app_path().append("backup");
 }
 
-std::string Config::get_db_filepath() const
+std::string Config::get_vocabulary_profile_filepath() const
 {
-    return get_app_path().append("keybr.db");
+    return get_app_path().append("vocabulary_profile.db");
 }
 
 std::string Config::get_kindle_db_filepath() const

@@ -10,13 +10,14 @@ CardModel::CardModel()
     if (!std::filesystem::exists(db_filepath)) {
         throw std::runtime_error("Please connect your Kindle via USB cable first");
     }
-    database = SqliteDatabase::open_read_only(db_filepath);
+    kindle_db = SqliteDatabase::open_read_only(db_filepath);
+    vocabulary_profile_db = SqliteDatabase::open_read_only(Config::instance().get_vocabulary_profile_filepath());
 }
 
 std::vector<std::string> CardModel::get_kindle_booklist() const
 {
     std::vector<std::string> result;
-    auto sql = database->create_query();
+    auto sql = kindle_db->create_query();
     sql << "SELECT DISTINCT title FROM BOOK_INFO";
     while (sql.step()) {
         result.push_back(sql.get_string());
@@ -28,7 +29,7 @@ std::vector<std::string> CardModel::get_kindle_booklist() const
 void CardModel::load_from_kindle(const std::string &book)
 {
     AnkiClient anki;
-    auto sql = database->create_query();
+    auto sql = kindle_db->create_query();
     sql << "SELECT DISTINCT w.stem\n"
            "FROM WORDS w\n"
            "JOIN LOOKUPS l ON w.id = l.word_key\n"
@@ -40,13 +41,27 @@ void CardModel::load_from_kindle(const std::string &book)
         auto word = sql.get_string();
         auto note = anki.request("findNotes", {{"query", "front:\"" + word + "\""}});
         if (note.empty()) {
-            cards.push_back(std::move(word));
+            auto pair = get_word_info(word);
+            cards.emplace_back(std::move(word), std::move(pair.first), std::move(pair.second));
         }
         ids.insert(ids.end(), note.begin(), note.end());
     }
     if (!ids.empty()) {
         anki.request("addTags", {{"notes", ids}, {"tags", "kindle"}});
     }
+}
+
+string_set_pair CardModel::get_word_info(const std::string &word) const
+{
+    string_set_pair pair;
+    auto sql = vocabulary_profile_db->create_query();
+    sql << "SELECT level, pos FROM words WHERE base = ?";
+    sql.bind(word);
+    while (sql.step()) {
+        pair.first.insert(sql.get_string());
+        pair.second.insert(sql.get_string());
+    }
+    return pair;
 }
 
 size_t CardModel::size() const
