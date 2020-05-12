@@ -50,6 +50,15 @@ bool tools::am_I_being_debugged()
     return ok && (info.kp_proc.p_flag & P_TRACED) != 0;
 }
 
+void tools::string_replace(std::string &str, const std::string &src, const std::string &dst)
+{
+    size_t pos = 0;
+    while ((pos = str.find(src, pos)) != std::string::npos) {
+        str.replace(pos, src.size(), dst);
+        pos += dst.size();
+    }
+}
+
 std::string tools::url_encode(const std::string &str)
 {
     std::string result;

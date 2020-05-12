@@ -11,16 +11,6 @@ void clone_file(const std::string &src, const std::string &dst);
 bool am_I_being_debugged();
 
 
-template <typename T>
-void string_replace(std::basic_string<T> &str, const std::basic_string<T> &src, const std::basic_string<T> &dst)
-{
-    size_t pos = 0;
-    while ((pos = str.find(src, pos)) != std::string::npos) {
-        str.replace(pos, src.size(), dst);
-        pos += dst.size();
-    }
-}
-
 template <typename T, typename Iterator, typename D>
 std::enable_if_t<std::is_convertible_v<T, std::basic_string<typename T::value_type>>, T>
 join(Iterator begin, Iterator end, const D &delimiter)
@@ -41,6 +31,8 @@ T join(const Container &container, const D &delimiter)
     return join<T>(container.begin(), container.end(), delimiter);
 }
 
+
+void string_replace(std::string &str, const std::string &src, const std::string &dst);
 std::string url_encode(const std::string &str);
 
 

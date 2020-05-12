@@ -112,12 +112,13 @@ private:
 class CursesWindow : public Window
 {
 public:
-    CursesWindow();
+    CursesWindow(uint16_t height = 0, uint16_t width = 0);
     CursesWindow(const CursesWindow &) = delete;
     CursesWindow &operator=(const CursesWindow &) = delete;
     ~CursesWindow();
 
     void set_color(const std::string &color);
+    uint32_t get_color(const std::string &color) const;
 
     void resize(uint16_t height, uint16_t width) override;
     void move(uint16_t y, uint16_t x) override;

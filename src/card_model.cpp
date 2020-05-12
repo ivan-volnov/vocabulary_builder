@@ -1,14 +1,16 @@
 #include "card_model.h"
 #include <unordered_set>
+#include <regex>
 #include "sqlite_database/sqlite_database.h"
 #include "utility/anki_client.h"
 #include "utility/tools.h"
 #include "utility/apple_script.h"
+#include "utility/speech_engine.h"
 #include "config.h"
 
 
 CardModel::CardModel() :
-    cambridge_dictionary("english-russian")
+    speech(std::make_shared<SpeechEngine>()), cambridge_dictionary("english-russian")
 {
     const auto db_filepath = Config::instance().get_kindle_db_filepath();
     if (!std::filesystem::exists(db_filepath)) {
@@ -68,6 +70,11 @@ string_set_pair CardModel::get_word_info(const std::string &word) const
     return pair;
 }
 
+const Card &CardModel::get_card(size_t idx) const
+{
+    return cards.at(idx);
+}
+
 size_t CardModel::size() const
 {
     return cards.size();
@@ -84,4 +91,28 @@ void CardModel::look_up_in_safari(const std::string &word)
             last_safari_word = word;
         }
     }
+}
+
+void CardModel::say(const std::string &word) const
+{
+    if (!speech) {
+        return;
+    }
+    auto txt = word;
+    txt = std::regex_replace(txt, std::regex("\\bsb\\b"), "somebody");
+    txt = std::regex_replace(txt, std::regex("\\bsth\\b"), "something");
+    txt = std::regex_replace(txt, std::regex("\\bswh\\b"), "somewhere");
+    if (txt != "or" &&
+        txt != "believe it or not" &&
+        txt != "or so" &&
+        txt != "more or less")
+    {
+        txt = std::regex_replace(txt, std::regex("\\bor\\b"), ",");
+    }
+    tools::string_replace(txt, "(", "");
+    tools::string_replace(txt, ")", "");
+    if (txt == "read, read, read") {
+        txt = "read, red, red";
+    }
+    speech->say(txt);
 }

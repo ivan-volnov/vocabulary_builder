@@ -193,7 +193,8 @@ WindowPtr Window::get_top_window()
 
 
 
-CursesWindow::CursesWindow()
+CursesWindow::CursesWindow(uint16_t height, uint16_t width) :
+    Window(height, width)
 {
     win = subwin(stdscr, 1, 1, 0, 0);
     leaveok(win, true);
@@ -207,6 +208,11 @@ CursesWindow::~CursesWindow()
 void CursesWindow::set_color(const std::string &color)
 {
     wbkgd(win, internal::instance().get_color(color));
+}
+
+uint32_t CursesWindow::get_color(const std::string &color) const
+{
+    return internal::instance().get_color(color);
 }
 
 void CursesWindow::resize(uint16_t height, uint16_t width)

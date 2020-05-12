@@ -33,9 +33,14 @@ public:
     uint8_t process_key(char32_t ch, bool is_symbol) override;
 
 private:
+    void print(const std::string &str) const;
+    void current_card_idx_changed();
+
+private:
     std::weak_ptr<Screen> screen_ptr;
-    std::shared_ptr<CardModel> model;
+    std::unique_ptr<CardModel> model;
     std::string txt;
+    size_t current_card_idx = 0;
 };
 
 
@@ -45,9 +50,6 @@ class Footer : public CursesWindow
 public:
     Footer();
 
-    uint8_t process_key(char32_t ch, bool is_symbol) override;
-
-public:
     void paint() const override;
 };
 

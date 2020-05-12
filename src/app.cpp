@@ -30,26 +30,16 @@ App::App()
 
 void App::run()
 {
-    auto layout = screen->create<SimpleBorder>()->create<HorizontalLayout>(1);
-    auto tst = layout->create<CursesWindow>();
-    layout->create<CursesWindow>()->set_color(ColorScheme::Test2);
+    auto layout = screen->create<SimpleBorder>()->create<VerticalLayout>();
+    layout->create<SimpleBorder>(3, 4)->create<MainWindow>(screen);
     layout->create<Footer>();
-
-    tst->set_color(ColorScheme::Test);
-
-    auto border = screen->create<SimpleBorder>(3, 4)->create<CursesBorder>();
-    border->set_color(ColorScheme::Test3);
-    auto win = border->create<MainWindow>(screen);
-
-//    win->run_modal();
-
     screen->run_modal();
 }
 
 
 
 MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
-    screen_ptr(screen), model(std::make_shared<CardModel>())
+    screen_ptr(screen), model(std::make_unique<CardModel>())
 {
     auto menu = screen->create<VerticalListMenu>(model->get_kindle_booklist());
     menu->run_modal();
@@ -57,46 +47,82 @@ MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
         throw std::runtime_error("You must select a book first");
     }
     model->load_from_kindle(menu->get_item_string());
-    txt = "selected: " + menu->get_item_string() + "\nloaded: " + std::to_string(model->size()) + " cards";
+    current_card_idx_changed();
 }
 
 void MainWindow::paint() const
 {
     wclear(win);
-    waddnstr(win, txt.c_str(), txt.size());
+
+    auto &card = model->get_card(current_card_idx);
+
+    print("Front : " + card.get_front());
+    print("Back  : " + card.get_back());
+    print("Pos   : " + card.get_pos_string());
+    print("Level : " + card.get_level_string());
+
+    wmove(win, get_height() - 1, 0);
+    print("Left  : " + std::to_string(model->size() - current_card_idx));
+
     wnoutrefresh(win);
 }
 
 uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
 {
-    if (is_symbol && ch == 27) { // escape
+    if (ch == 27 && is_symbol) { // escape
         return PleaseExitModal;
     }
-    uint8_t res = 0;
-    return res;
+    else if (ch == 10 && is_symbol) { // enter
+    }
+    else if (ch == (is_symbol ? 'k' : KEY_UP)) {
+        if (current_card_idx > 0) {
+            --current_card_idx;
+            current_card_idx_changed();
+        }
+    }
+    else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
+        if (current_card_idx + 1 < model->size()) {
+            ++current_card_idx;
+            current_card_idx_changed();
+        }
+    }
+    else {
+        return 0;
+    }
+    return PleasePaint;
+}
+
+void MainWindow::print(const std::string &str) const
+{
+    waddnstr(win, str.c_str(), str.size());
+    waddch(win, '\n');
+}
+
+void MainWindow::current_card_idx_changed()
+{
+    auto word = model->get_card(current_card_idx).get_front();
+    model->look_up_in_safari(word);
+    model->say(word);
 }
 
 
 
-Footer::Footer()
+Footer::Footer() :
+    CursesWindow(1)
 {
-
-}
-
-uint8_t Footer::process_key(char32_t ch, bool is_symbol)
-{
-    if (is_symbol && ch == 27) { // escape
-        return PleaseExitModal;
-    }
-    if (is_symbol && ch == 'q') {
-        close();
-        return PleasePaint;
-    }
-    return 0;
 }
 
 void Footer::paint() const
 {
     wclear(win);
+//    whline(win, '_', get_width());
+//    wmove(win, 1, 0);
+    for (const std::string str : {"[ESC]Exit", "[A]Add", "[E]Edit", "[J]Next", "[K]Back", "[R]Reload"}) {
+//        wattron(win, A_STANDOUT );
+        waddnstr(win, str.c_str(), std::min(str.size(), static_cast<size_t>(get_width() - getcurx(win))));
+//        wattroff(win, A_STANDOUT);
+        waddch(win, ' ');
+        waddch(win, ' ');
+    }
     wnoutrefresh(win);
 }
