@@ -12,6 +12,10 @@ add_subdirectory(libs/sqlite_database)
 include_directories(libs/sqlite_database/include)
 include_directories(./)
 
+set(MM_SOURCE_FILES
+    src/utility/apple_script.mm
+)
+
 add_executable(${PROJECT_NAME}
     src/app.cpp
     src/app.h
@@ -25,6 +29,7 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utility/anki_client.cpp
     src/utility/anki_client.h
+    src/utility/apple_script.h
     src/utility/curl_request.cpp
     src/utility/curl_request.h
     src/utility/speech_engine.cpp
@@ -35,13 +40,17 @@ add_executable(${PROJECT_NAME}
     src/utility/tools.h
     src/utility/utf8_tools.cpp
     src/utility/utf8_tools.h
+    ${MM_SOURCE_FILES}
 )
+
+set_source_files_properties(${MM_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-x objective-c++")
 
 target_link_libraries(${PROJECT_NAME}
     ncurses
     sqlite_database
     curl
     "-framework ApplicationServices"
+    "-framework Foundation"
 )
 
 install (TARGETS
