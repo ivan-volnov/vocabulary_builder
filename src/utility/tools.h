@@ -41,6 +41,8 @@ T join(const Container &container, const D &delimiter)
     return join<T>(container.begin(), container.end(), delimiter);
 }
 
+std::string url_encode(const std::string &str);
+
 
 } // namespace tools
 

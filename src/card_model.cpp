@@ -2,10 +2,13 @@
 #include <unordered_set>
 #include "sqlite_database/sqlite_database.h"
 #include "utility/anki_client.h"
+#include "utility/tools.h"
+#include "utility/apple_script.h"
 #include "config.h"
 
 
-CardModel::CardModel()
+CardModel::CardModel() :
+    cambridge_dictionary("english-russian")
 {
     const auto db_filepath = Config::instance().get_kindle_db_filepath();
     if (!std::filesystem::exists(db_filepath)) {
@@ -68,4 +71,17 @@ string_set_pair CardModel::get_word_info(const std::string &word) const
 size_t CardModel::size() const
 {
     return cards.size();
+}
+
+void CardModel::look_up_in_safari(const std::string &word)
+{
+    if (word != last_safari_word) {
+        std::ostringstream ss;
+        ss << "tell application \"Safari\" to set the URL of the front document to \""
+           << "https://dictionary.cambridge.org/search/direct/?datasetsearch=" << cambridge_dictionary << "&q=" << tools::url_encode(word)
+           << "\"";
+        if (AppleScript::run_apple_script(ss.str())) {
+            last_safari_word = word;
+        }
+    }
 }

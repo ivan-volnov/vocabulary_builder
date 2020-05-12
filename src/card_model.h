@@ -20,10 +20,14 @@ public:
 
     size_t size() const;
 
+    void look_up_in_safari(const std::string &word);
+
 private:
     std::vector<Card> cards;
     std::shared_ptr<SqliteDatabase> kindle_db;
     std::shared_ptr<SqliteDatabase> vocabulary_profile_db;
+    std::string last_safari_word;
+    std::string cambridge_dictionary;
 };
 
 
