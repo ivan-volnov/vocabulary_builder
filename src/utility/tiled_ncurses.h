@@ -88,7 +88,8 @@ public:
     uint16_t get_x() const;
 
     template<class T, class ...Args>
-    typename std::enable_if_t<std::is_base_of_v<Window, T>, std::shared_ptr<T>> create(Args&& ...args)
+    std::enable_if_t<std::is_base_of_v<Window, T>, std::shared_ptr<T>>
+    create(Args&& ...args)
     {
         auto ptr = std::make_shared<T>(std::forward<Args>(args)...);
         add_window(ptr);

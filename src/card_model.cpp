@@ -1,4 +1,5 @@
 #include "card_model.h"
+#include <unordered_set>
 #include "sqlite_database/sqlite_database.h"
 #include "utility/anki_client.h"
 #include "config.h"
@@ -36,7 +37,7 @@ void CardModel::load_from_kindle(const std::string &book)
            "JOIN BOOK_INFO b ON l.book_key = b.id\n"
            "WHERE b.title = ?\n";
     sql.bind(book);
-    std::vector<uint64_t> ids;
+    std::unordered_set<uint64_t> ids;
     while (sql.step()) {
         auto word = sql.get_string();
         auto note = anki.request("findNotes", {{"query", "front:\"" + word + "\""}});
@@ -44,7 +45,7 @@ void CardModel::load_from_kindle(const std::string &book)
             auto pair = get_word_info(word);
             cards.emplace_back(std::move(word), std::move(pair.first), std::move(pair.second));
         }
-        ids.insert(ids.end(), note.begin(), note.end());
+        ids.insert(note.begin(), note.end());
     }
     if (!ids.empty()) {
         anki.request("addTags", {{"notes", ids}, {"tags", "kindle"}});

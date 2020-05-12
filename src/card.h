@@ -12,19 +12,20 @@ using string_set_tuple3 = std::tuple<string_set, string_set, string_set>;
 class Card
 {
 public:
-    Card(std::string &&front, string_set &&levels, string_set &&pos) :
-        front(std::move(front)), levels(std::move(levels)), pos(std::move(pos))
-    {
+    Card(std::string &&front, string_set &&levels, string_set &&pos);
 
-    }
+    std::string get_front() const;
+    std::string get_back() const;
+    string_set get_levels() const;
+    string_set get_pos() const;
+    std::string get_level_string() const;
+    std::string get_pos_string() const;
 
     template<typename T>
-    void set_levels(T &&value)
+    void set_back(T &&value)
     {
-        levels = std::forward<T>(value);
+        back = std::forward<T>(value);
     }
-
-    string_set get_levels();
 
 private:
     std::string front;
