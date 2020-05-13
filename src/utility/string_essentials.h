@@ -113,14 +113,14 @@ size_t strlen(Iterator begin, Iterator end)
 template <typename T, typename Iterator>
 std::basic_string<T> join(Iterator begin, Iterator end, const T *delimiter)
 {
-    std::basic_ostringstream<T> ss;
+    std::basic_ostringstream<T> stream;
     for (auto it = begin; it != end; ++it) {
         if (it != begin) {
-            ss << delimiter;
+            stream << delimiter;
         }
-        ss << *it;
+        stream << *it;
     }
-    return ss.str();
+    return stream.str();
 }
 
 template <typename T, typename Container>
@@ -132,18 +132,29 @@ std::basic_string<T> join(const Container &container, const T *delimiter)
 template <template<typename...> class Container = std::vector, typename T>
 auto split(const std::basic_string<T> &str, const T *delimiter)
 {
-    Container<std::basic_string<T>> result;
+    Container<std::basic_string<T>> container;
     const auto len = std::char_traits<T>::length(delimiter);
-    typename std::basic_string<T>::size_type start_pos = 0, pos = 0;
-    while ((pos = str.find(delimiter, pos)) != std::basic_string<T>::npos) {
-        result.insert(result.end(), str.substr(start_pos, pos));
-        pos += len;
-        start_pos = pos;
-    }
-    return result;
+    typename std::basic_string<T>::size_type start_pos = 0, pos;
+    do {
+        pos = str.find(delimiter, start_pos);
+        container.insert(container.end(), str.substr(start_pos, pos));
+        start_pos = pos + len;
+    } while (pos != std::basic_string<T>::npos);
+    return container;
 }
 
-void replace(std::string &str, const std::string &src, const std::string &dst);
+template <typename T>
+void replace(std::basic_string<T> &str, const T *src, const T *dst)
+{
+    const auto src_len = std::char_traits<T>::length(src);
+    const auto dst_len = std::char_traits<T>::length(dst);
+    typename std::basic_string<T>::size_type pos = 0;
+    while ((pos = str.find(src, pos)) != std::basic_string<T>::npos) {
+        str.replace(pos, src_len, dst);
+        pos += dst_len;
+    }
+}
+
 std::string url_encode(const std::string &str);
 
 } // namespace string_essentials

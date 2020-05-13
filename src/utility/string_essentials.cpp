@@ -214,15 +214,6 @@ void string_essentials::utf8::resize(std::string &str, size_t n, char ch)
 
 
 
-void string_essentials::replace(std::string &str, const std::string &src, const std::string &dst)
-{
-    size_t pos = 0;
-    while ((pos = str.find(src, pos)) != std::string::npos) {
-        str.replace(pos, src.size(), dst);
-        pos += dst.size();
-    }
-}
-
 std::string string_essentials::url_encode(const std::string &str)
 {
     std::string result;
