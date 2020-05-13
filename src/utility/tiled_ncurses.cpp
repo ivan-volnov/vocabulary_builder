@@ -27,7 +27,7 @@ SOFTWARE.
 #include <ncurses.h>
 #include <locale.h>
 #include <mutex>
-#include <string_essentials/string_essentials.h>
+#include <string_essentials/string_essentials.hpp>
 
 
 

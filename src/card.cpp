@@ -1,5 +1,5 @@
 #include "card.h"
-#include <string_essentials/string_essentials.h>
+#include <string_essentials/string_essentials.hpp>
 
 
 Card::Card(std::string &&front, string_set &&levels, string_set &&pos) :
