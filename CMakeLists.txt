@@ -8,8 +8,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 
 add_subdirectory(libs/sqlite_database)
+add_subdirectory(libs/string_essentials)
 
 include_directories(libs/sqlite_database/include)
+include_directories(libs/string_essentials/include)
 include_directories(./)
 
 set(MM_SOURCE_FILES
@@ -34,8 +36,6 @@ add_executable(${PROJECT_NAME}
     src/utility/curl_request.h
     src/utility/speech_engine.cpp
     src/utility/speech_engine.h
-    src/utility/string_essentials.cpp
-    src/utility/string_essentials.h
     src/utility/tiled_ncurses.cpp
     src/utility/tiled_ncurses.h
     src/utility/tools.cpp
@@ -46,6 +46,7 @@ add_executable(${PROJECT_NAME}
 set_source_files_properties(${MM_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-x objective-c++")
 
 target_link_libraries(${PROJECT_NAME}
+    string_essentials
     ncurses
     sqlite_database
     curl

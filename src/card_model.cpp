@@ -1,9 +1,9 @@
 #include "card_model.h"
 #include <unordered_set>
 #include <regex>
+#include <string_essentials/string_essentials.h>
 #include "sqlite_database/sqlite_database.h"
 #include "utility/anki_client.h"
-#include "utility/string_essentials.h"
 #include "utility/apple_script.h"
 #include "utility/speech_engine.h"
 #include "config.h"
