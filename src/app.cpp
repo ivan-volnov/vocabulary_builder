@@ -73,13 +73,13 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
         return PleaseExitModal;
     }
     else if (ch == 'a' && is_symbol) {
-        model->anki_add_card(current_card_idx);
+        model->anki_add_card(model->get_card(current_card_idx));
     }
     else if (ch == 'e' && is_symbol) {
-        model->anki_open_browser(current_card_idx);
+        model->anki_open_browser(model->get_card(current_card_idx));
     }
     else if (ch == 'r' && is_symbol) {
-        // reload
+        model->anki_reload_card(model->get_card(current_card_idx));
     }
     else if (ch == (is_symbol ? 'k' : KEY_UP)) {
         if (current_card_idx > 0) {

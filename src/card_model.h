@@ -20,6 +20,7 @@ public:
 
     string_set_pair get_word_info(const std::string &word) const;
 
+    Card &get_card(size_t idx);
     const Card &get_card(size_t idx) const;
 
     size_t size() const;
@@ -27,8 +28,11 @@ public:
     void look_up_in_safari(const std::string &word);
     void say(const std::string &word) const;
 
-    void anki_add_card(size_t idx);
-    void anki_open_browser(size_t idx) const;
+    void anki_add_card(Card &card) const;
+    void anki_open_browser(const Card &card) const;
+    void anki_reload_card(Card &card) const;
+
+    bool anki_find_card(Card &card) const;
 
 private:
     std::vector<Card> cards;

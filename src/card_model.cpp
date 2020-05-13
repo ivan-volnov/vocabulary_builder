@@ -20,6 +20,9 @@ CardModel::CardModel() :
     vocabulary_profile_db = SqliteDatabase::open_read_only(Config::instance().get_vocabulary_profile_filepath());
     speech = std::make_shared<SpeechEngine>();
     anki = std::make_shared<AnkiClient>();
+    if (anki->request("version").get<uint64_t>() < 6) {
+        throw std::runtime_error("AnkiConnect plugin is too old. Please update");
+    }
 }
 
 std::vector<std::string> CardModel::get_kindle_booklist() const
@@ -57,12 +60,11 @@ void CardModel::load_from_kindle(const std::string &book)
         anki->request("addTags", {{"notes", ids}, {"tags", "kindle"}});
     }
     auto notes = anki->request("findNotes", {{"query", "tag:vb_beta"}});
-    notes = anki->request("notesInfo", {{"notes", notes}});
-    for (const auto &note : notes) {
+    for (const auto &note : anki->request("notesInfo", {{"notes", notes}})) {
         const auto front = note.at("fields").at("Front").at("value").get<std::string>();
         for (auto &card : cards) {
             if (card.get_front() == front) {
-                card.set_anki_note_id(note.at("noteId").get<uint64_t>());
+                card.set_note_id(note.at("noteId").get<uint64_t>());
                 card.set_back(note.at("fields").at("Back").at("value").get<std::string>());
                 break;
             }
@@ -81,6 +83,11 @@ string_set_pair CardModel::get_word_info(const std::string &word) const
         pair.second.insert(sql.get_string());
     }
     return pair;
+}
+
+Card &CardModel::get_card(size_t idx)
+{
+    return cards.at(idx);
 }
 
 const Card &CardModel::get_card(size_t idx) const
@@ -130,29 +137,57 @@ void CardModel::say(const std::string &word) const
     speech->say(txt);
 }
 
-void CardModel::anki_add_card(size_t idx)
+void CardModel::anki_add_card(Card &card) const
 {
-    auto &card = cards.at(idx);
-    assert(!card.get_levels().empty());
-    const auto word = card.get_front();
-    if (anki->request("findNotes", {{"query", "front:\"" + word + "\""}}).empty()) {
+    if (!anki_find_card(card)) {
         auto tags = card.get_levels();
+        assert(!tags.empty());
         tags.insert("kindle");
         tags.insert("vb_beta");
         auto note = anki->request("addNotes", {{"notes", {{
             {"deckName", "En::Vocabulary Profile::" + *card.get_levels().begin()},
             {"modelName", "Main en-GB"},
             {"fields", {
-                 {"Front", word},
-                 {"PoS", card.get_pos_string()}}},
+                 {"Front", card.get_front()},
+                 {"PoS", card.get_pos_string()} }},
             {"tags", tags},
         }}}});
-        card.set_anki_note_id(note.at(0).get<uint64_t>());
+        card.set_note_id(note.at(0).get<uint64_t>());
     }
-    anki_open_browser(idx);
+    anki_open_browser(card);
 }
 
-void CardModel::anki_open_browser(size_t idx) const
+void CardModel::anki_open_browser(const Card &card) const
 {
-    anki->request("guiBrowse", {{"query", "front:\"" + cards.at(idx).get_front() + "\""}});
+    anki->request("guiBrowse", {{"query", "front:\"" + card.get_front() + "\""}});
+}
+
+void CardModel::anki_reload_card(Card &card) const
+{
+    if (!card.get_note_id()) {
+        anki_find_card(card);
+    }
+    if (card.get_note_id()) {
+        auto notes = anki->request("notesInfo", {{"notes", {card.get_note_id()}}});
+        if (notes.empty()) {
+            anki_find_card(card);
+            return;
+        }
+        const auto &note = notes.at(0);
+        if (card.get_front() != note.at("fields").at("Front").at("value").get<std::string>()) {
+            anki_find_card(card);
+            return;
+        }
+        card.set_back(note.at("fields").at("Back").at("value").get<std::string>());
+    }
+}
+
+bool CardModel::anki_find_card(Card &card) const
+{
+    auto notes = anki->request("findNotes", {{"query", "front:\"" + card.get_front() + "\""}});
+    if (notes.empty()) {
+        return false;
+    }
+    card.set_note_id(notes.at(0).get<uint64_t>());
+    return true;
 }
