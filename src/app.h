@@ -1,7 +1,7 @@
 #ifndef APP_H
 #define APP_H
 
-#include "utility/tiled_ncurses.h"
+#include <tiled_ncurses/tiled_ncurses.hpp>
 #include <vector>
 #include <string>
 

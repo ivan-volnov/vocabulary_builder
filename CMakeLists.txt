@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 
 add_subdirectory(libs/sqlite_database)
 add_subdirectory(libs/string_essentials)
+add_subdirectory(libs/tiled_ncurses)
 
 include_directories(./)
 
@@ -34,8 +35,6 @@ add_executable(${PROJECT_NAME}
     src/utility/curl_request.h
     src/utility/speech_engine.cpp
     src/utility/speech_engine.h
-    src/utility/tiled_ncurses.cpp
-    src/utility/tiled_ncurses.h
     src/utility/tools.cpp
     src/utility/tools.h
     ${MM_SOURCE_FILES}
@@ -47,7 +46,7 @@ set_source_files_properties(${MM_SOURCE_FILES}
 
 target_link_libraries(${PROJECT_NAME}
     string_essentials
-    ncurses
+    tiled_ncurses
     sqlite_database
     curl
     "-framework ApplicationServices"
