@@ -14,6 +14,12 @@ class Card
 public:
     Card(std::string &&front, string_set &&levels, string_set &&pos);
 
+    ~Card() = default;
+    Card(const Card &) = delete;
+    Card &operator=(const Card &) = delete;
+    Card(Card &&) = default;
+    Card &operator=(Card &&) = delete;
+
     std::string get_front() const;
     std::string get_back() const;
     std::string get_level() const;
@@ -22,6 +28,8 @@ public:
     uint64_t get_note_id() const;
     std::string get_level_string() const;
     std::string get_pos_string() const;
+
+    // TODO: strip html tags and double spaces, trim trailing whitespaces
 
     template<typename T>
     void set_back(T &&value)

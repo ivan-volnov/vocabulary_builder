@@ -47,7 +47,7 @@ MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
         throw std::runtime_error("You must select a book first");
     }
     model->load_from_kindle(menu->get_item_string());
-    current_card_idx_changed();
+    current_card_idx_changed(-1);
 }
 
 void MainWindow::paint() const
@@ -83,14 +83,12 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
     }
     else if (ch == (is_symbol ? 'k' : KEY_UP)) {
         if (current_card_idx > 0) {
-            --current_card_idx;
-            current_card_idx_changed();
+            current_card_idx_changed(current_card_idx--);
         }
     }
     else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
         if (current_card_idx + 1 < model->size()) {
-            ++current_card_idx;
-            current_card_idx_changed();
+            current_card_idx_changed(current_card_idx++);
         }
     }
     else {
@@ -105,11 +103,14 @@ void MainWindow::print(const std::string &str) const
     waddch(win, '\n');
 }
 
-void MainWindow::current_card_idx_changed()
+void MainWindow::current_card_idx_changed(size_t prev_card_idx)
 {
+    if (prev_card_idx != static_cast<size_t>(-1)) {
+        model->anki_reload_card(model->get_card(prev_card_idx));
+    }
     auto word = model->get_card(current_card_idx).get_front();
-    model->look_up_in_safari(word);
     model->say(word);
+    model->look_up_in_safari(word);
 }
 
 

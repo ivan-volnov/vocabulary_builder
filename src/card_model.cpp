@@ -34,7 +34,6 @@ std::vector<std::string> CardModel::get_kindle_booklist() const
         result.push_back(sql.get_string());
     }
     return result;
-
 }
 
 void CardModel::load_from_kindle(const std::string &book)
@@ -176,6 +175,7 @@ void CardModel::anki_reload_card(Card &card) const
         card.set_pos(string_essentials::split<std::set>(note.at("fields").at("PoS").at("value").get<std::string>(), ", "));
         return;
     } while (anki_find_card(card));
+    // TODO: update anki note after stripping tags
 }
 
 bool CardModel::anki_find_card(Card &card) const

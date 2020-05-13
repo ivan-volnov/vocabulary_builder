@@ -34,7 +34,7 @@ public:
 
 private:
     void print(const std::string &str) const;
-    void current_card_idx_changed();
+    void current_card_idx_changed(size_t prev_card_idx);
 
 private:
     std::weak_ptr<Screen> screen_ptr;
