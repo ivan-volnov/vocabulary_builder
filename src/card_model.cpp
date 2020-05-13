@@ -163,28 +163,26 @@ void CardModel::anki_open_browser(const Card &card) const
 
 void CardModel::anki_reload_card(Card &card) const
 {
-    if (!card.get_note_id()) {
-        anki_find_card(card);
-    }
-    if (card.get_note_id()) {
-        auto notes = anki->request("notesInfo", {{"notes", {card.get_note_id()}}});
-        if (notes.empty()) {
-            anki_find_card(card);
-            return;
+    do {
+        if (!card.get_note_id()) {
+            continue;
         }
-        const auto &note = notes.at(0);
-        if (card.get_front() != note.at("fields").at("Front").at("value").get<std::string>()) {
-            anki_find_card(card);
-            return;
+        auto note = anki->request("notesInfo", {{"notes", {card.get_note_id()}}}).at(0);
+        if (note.empty() || card.get_front() != note.at("fields").at("Front").at("value").get<std::string>()) {
+            card.set_note_id(0);
+            continue;
         }
         card.set_back(note.at("fields").at("Back").at("value").get<std::string>());
-    }
+        card.set_pos(string_essentials::split<std::set>(note.at("fields").at("PoS").at("value").get<std::string>(), ", "));
+        return;
+    } while (anki_find_card(card));
 }
 
 bool CardModel::anki_find_card(Card &card) const
 {
     auto notes = anki->request("findNotes", {{"query", "front:\"" + card.get_front() + "\""}});
     if (notes.empty()) {
+        card.set_note_id(0);
         return false;
     }
     card.set_note_id(notes.at(0).get<uint64_t>());
