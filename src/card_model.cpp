@@ -141,11 +141,10 @@ void CardModel::anki_add_card(Card &card) const
 {
     if (!anki_find_card(card)) {
         auto tags = card.get_levels();
-        assert(!tags.empty());
         tags.insert("kindle");
         tags.insert("vb_beta");
         auto note = anki->request("addNotes", {{"notes", {{
-            {"deckName", "En::Vocabulary Profile::" + *card.get_levels().begin()},
+            {"deckName", "En::Vocabulary Profile::" + card.get_level()},
             {"modelName", "Main en-GB"},
             {"fields", {
                  {"Front", card.get_front()},

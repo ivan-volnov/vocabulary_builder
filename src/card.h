@@ -16,6 +16,7 @@ public:
 
     std::string get_front() const;
     std::string get_back() const;
+    std::string get_level() const;
     string_set get_levels() const;
     string_set get_pos() const;
     uint64_t get_note_id() const;

@@ -18,6 +18,11 @@ std::string Card::get_back() const
     return back;
 }
 
+std::string Card::get_level() const
+{
+    return levels.empty() ? "D1" : *levels.begin();
+}
+
 string_set Card::get_levels() const
 {
     return levels;
