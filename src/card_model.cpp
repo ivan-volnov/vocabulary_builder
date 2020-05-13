@@ -3,7 +3,7 @@
 #include <regex>
 #include "sqlite_database/sqlite_database.h"
 #include "utility/anki_client.h"
-#include "utility/tools.h"
+#include "utility/string_essentials.h"
 #include "utility/apple_script.h"
 #include "utility/speech_engine.h"
 #include "config.h"
@@ -105,7 +105,7 @@ void CardModel::look_up_in_safari(const std::string &word)
     if (word != last_safari_word) {
         std::ostringstream ss;
         ss << "tell application \"Safari\" to set the URL of the front document to \""
-           << "https://dictionary.cambridge.org/search/direct/?datasetsearch=" << cambridge_dictionary << "&q=" << tools::url_encode(word)
+           << "https://dictionary.cambridge.org/search/direct/?datasetsearch=" << cambridge_dictionary << "&q=" << string_essentials::url_encode(word)
            << "\"";
         if (AppleScript::run_apple_script(ss.str())) {
             last_safari_word = word;
@@ -129,8 +129,8 @@ void CardModel::say(const std::string &word) const
     {
         txt = std::regex_replace(txt, std::regex("\\bor\\b"), ",");
     }
-    tools::string_replace(txt, "(", "");
-    tools::string_replace(txt, ")", "");
+    string_essentials::replace(txt, "(", "");
+    string_essentials::replace(txt, ")", "");
     if (txt == "read, read, read") {
         txt = "read, red, red";
     }

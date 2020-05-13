@@ -1,5 +1,5 @@
 #include "card.h"
-#include "utility/tools.h"
+#include "utility/string_essentials.h"
 
 
 Card::Card(std::string &&front, string_set &&levels, string_set &&pos) :
@@ -40,12 +40,12 @@ uint64_t Card::get_note_id() const
 
 std::string Card::get_level_string() const
 {
-    return tools::join<std::string>(levels, ", ");
+    return string_essentials::join(levels, ", ");
 }
 
 std::string Card::get_pos_string() const
 {
-    return tools::join<std::string>(pos, ", ");
+    return string_essentials::join(pos, ", ");
 }
 
 void Card::set_note_id(uint64_t id)

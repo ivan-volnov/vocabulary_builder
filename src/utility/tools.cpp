@@ -27,8 +27,6 @@ std::string tools::weekday_to_string(uint32_t day)
     }
 }
 
-
-
 void tools::clone_file(const std::string &src, const std::string &dst)
 {
     if (std::filesystem::exists(dst)) {
@@ -48,31 +46,4 @@ bool tools::am_I_being_debugged()
     const bool ok = sysctl(mib, sizeof(mib) / sizeof(*mib), &info, &size, nullptr, 0) == 0;
     assert(ok);
     return ok && (info.kp_proc.p_flag & P_TRACED) != 0;
-}
-
-void tools::string_replace(std::string &str, const std::string &src, const std::string &dst)
-{
-    size_t pos = 0;
-    while ((pos = str.find(src, pos)) != std::string::npos) {
-        str.replace(pos, src.size(), dst);
-        pos += dst.size();
-    }
-}
-
-std::string tools::url_encode(const std::string &str)
-{
-    std::string result;
-    const char *dec2hex = "0123456789ABCDEF";
-    for (const uint8_t c : str) {
-        if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                                   || c == '-' || c == '_' || c == '.' || c == '~') {
-            result.append(1, c);
-        }
-        else {
-            result.append(1, '%');
-            result.append(1, dec2hex[c >> 4]);
-            result.append(1, dec2hex[c & 0b1111]);
-        }
-    }
-    return result;
 }

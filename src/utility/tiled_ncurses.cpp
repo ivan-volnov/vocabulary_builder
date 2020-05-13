@@ -27,7 +27,7 @@ SOFTWARE.
 #include <ncurses.h>
 #include <locale.h>
 #include <mutex>
-#include "utf8_tools.h"
+#include "string_essentials.h"
 
 
 
@@ -80,7 +80,7 @@ void Window::run_modal()
 {
     get_top_window()->paint();
     int key;
-    utf8::decoder decoder;
+    string_essentials::utf8::decoder decoder;
     uint8_t res;
     const bool parent_state = _parent.expired();
     while (parent_state || !_parent.expired()) {
@@ -276,7 +276,7 @@ void VerticalListMenu::paint() const
     const auto lines = std::min(static_cast<size_t>(get_height()), list.size());
     for (size_t i = 0; i < lines; ++i) {
         auto item = list.at(screen_offset + i);
-        utf8::resize(item, get_width(), ' ');
+        string_essentials::utf8::resize(item, get_width(), ' ');
         if (i == cursor_offset) {
             wattron(win, A_STANDOUT);
             waddnstr(win, item.c_str(), item.size());

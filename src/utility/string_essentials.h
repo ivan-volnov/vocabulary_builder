@@ -23,14 +23,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef UTF8_TOOLS_H
-#define UTF8_TOOLS_H
+#ifndef STRING_ESSENTIALS_H
+#define STRING_ESSENTIALS_H
 
-#include <string>
+#include <sstream>
 
+
+namespace string_essentials {
 
 namespace utf8 {
-
 
 class decoder
 {
@@ -108,4 +109,43 @@ size_t strlen(Iterator begin, Iterator end)
 
 } // namespace utf8
 
-#endif // UTF8_TOOLS_H
+
+template <typename T, typename Iterator>
+std::basic_string<T> join(Iterator begin, Iterator end, const T *delimiter)
+{
+    std::basic_ostringstream<T> ss;
+    for (auto it = begin; it != end; ++it) {
+        if (it != begin) {
+            ss << delimiter;
+        }
+        ss << *it;
+    }
+    return ss.str();
+}
+
+template <typename T, typename Container>
+std::basic_string<T> join(const Container &container, const T *delimiter)
+{
+    return join(container.begin(), container.end(), delimiter);
+}
+
+template <template<typename...> class Container = std::vector, typename T>
+auto split(const std::basic_string<T> &str, const T *delimiter)
+{
+    Container<std::basic_string<T>> result;
+    const auto len = std::char_traits<T>::length(delimiter);
+    typename std::basic_string<T>::size_type start_pos = 0, pos = 0;
+    while ((pos = str.find(delimiter, pos)) != std::basic_string<T>::npos) {
+        result.insert(result.end(), str.substr(start_pos, pos));
+        pos += len;
+        start_pos = pos;
+    }
+    return result;
+}
+
+void replace(std::string &str, const std::string &src, const std::string &dst);
+std::string url_encode(const std::string &str);
+
+} // namespace string_essentials
+
+#endif // STRING_ESSENTIALS_H

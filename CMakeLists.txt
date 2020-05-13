@@ -34,12 +34,12 @@ add_executable(${PROJECT_NAME}
     src/utility/curl_request.h
     src/utility/speech_engine.cpp
     src/utility/speech_engine.h
+    src/utility/string_essentials.cpp
+    src/utility/string_essentials.h
     src/utility/tiled_ncurses.cpp
     src/utility/tiled_ncurses.h
     src/utility/tools.cpp
     src/utility/tools.h
-    src/utility/utf8_tools.cpp
-    src/utility/utf8_tools.h
     ${MM_SOURCE_FILES}
 )
 

@@ -26,7 +26,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "utf8_tools.h"
+#include "string_essentials.h"
 
 
 constexpr uint32_t UTF8_ACCEPT = 0;
@@ -53,7 +53,7 @@ constexpr uint8_t utf8d[] = {
     12,36,12,12,12,12,12,12,12,12,12,12,
 };
 
-bool utf8::decoder::decode_symbol(uint8_t ch)
+bool string_essentials::utf8::decoder::decode_symbol(uint8_t ch)
 {
     uint32_t type = utf8d[ch];
     codepoint = state == UTF8_ACCEPT ? (0xffu >> type) & ch : (ch & 0x3fu) | (codepoint << 6u);
@@ -65,7 +65,7 @@ bool utf8::decoder::decode_symbol(uint8_t ch)
     return state == UTF8_ACCEPT;
 }
 
-bool utf8::decoder::skip_symbol(uint8_t ch)
+bool string_essentials::utf8::decoder::skip_symbol(uint8_t ch)
 {
     state = utf8d[256 + state + utf8d[ch]];
     if (state == UTF8_REJECT) {
@@ -75,12 +75,12 @@ bool utf8::decoder::skip_symbol(uint8_t ch)
     return state == UTF8_ACCEPT;
 }
 
-char32_t utf8::decoder::symbol() const
+char32_t string_essentials::utf8::decoder::symbol() const
 {
     return codepoint;
 }
 
-void utf8::encode_symbol(char32_t codepoint, std::string &str)
+void string_essentials::utf8::encode_symbol(char32_t codepoint, std::string &str)
 {
     if (codepoint < 0x80) {
         str.append(1, codepoint);
@@ -102,7 +102,7 @@ void utf8::encode_symbol(char32_t codepoint, std::string &str)
     }
 }
 
-std::u32string utf8::decode(std::string::const_iterator begin, std::string::const_iterator end)
+std::u32string string_essentials::utf8::decode(std::string::const_iterator begin, std::string::const_iterator end)
 {
     std::u32string result;
     decoder decoder;
@@ -112,12 +112,12 @@ std::u32string utf8::decode(std::string::const_iterator begin, std::string::cons
     return result;
 }
 
-std::u32string utf8::decode(const std::string &str)
+std::u32string string_essentials::utf8::decode(const std::string &str)
 {
     return decode(str.begin(), str.end());
 }
 
-std::string utf8::encode(std::u32string::const_iterator begin, std::u32string::const_iterator end)
+std::string string_essentials::utf8::encode(std::u32string::const_iterator begin, std::u32string::const_iterator end)
 {
     std::string result;
     for (; begin != end; ++begin) {
@@ -126,24 +126,24 @@ std::string utf8::encode(std::u32string::const_iterator begin, std::u32string::c
     return result;
 }
 
-std::string utf8::encode(const std::u32string &str)
+std::string string_essentials::utf8::encode(const std::u32string &str)
 {
     return encode(str.begin(), str.end());
 }
 
-std::string utf8::encode(char32_t codepoint)
+std::string string_essentials::utf8::encode(char32_t codepoint)
 {
     std::string result;
     encode_symbol(codepoint, result);
     return result;
 }
 
-size_t utf8::strlen(const std::string &str)
+size_t string_essentials::utf8::strlen(const std::string &str)
 {
     return strlen(str.begin(), str.end());
 }
 
-size_t utf8::strlen(const char *str)
+size_t string_essentials::utf8::strlen(const char *str)
 {
     size_t len = 0;
     decoder decoder;
@@ -155,7 +155,7 @@ size_t utf8::strlen(const char *str)
     return len;
 }
 
-size_t utf8::strlen(char32_t codepoint)
+size_t string_essentials::utf8::strlen(char32_t codepoint)
 {
     if (codepoint < 0x80) {
         return 1;
@@ -172,7 +172,7 @@ size_t utf8::strlen(char32_t codepoint)
     return 0;
 }
 
-char32_t utf8::at(size_t idx, const std::string &str)
+char32_t string_essentials::utf8::at(size_t idx, const std::string &str)
 {
     decoder decoder;
     for (auto ch : str) {
@@ -184,7 +184,7 @@ char32_t utf8::at(size_t idx, const std::string &str)
     throw std::out_of_range("utf8: out of range");
 }
 
-char32_t utf8::at(size_t idx, const char *str)
+char32_t string_essentials::utf8::at(size_t idx, const char *str)
 {
     decoder decoder;
     for (char ch; (ch = *str); ++str) {
@@ -196,7 +196,7 @@ char32_t utf8::at(size_t idx, const char *str)
     throw std::out_of_range("utf8: out of range");
 }
 
-void utf8::resize(std::string &str, size_t n, char ch)
+void string_essentials::utf8::resize(std::string &str, size_t n, char ch)
 {
     if (!n) {
         str.clear();
@@ -210,4 +210,33 @@ void utf8::resize(std::string &str, size_t n, char ch)
         }
     }
     str.append(n, ch);
+}
+
+
+
+void string_essentials::replace(std::string &str, const std::string &src, const std::string &dst)
+{
+    size_t pos = 0;
+    while ((pos = str.find(src, pos)) != std::string::npos) {
+        str.replace(pos, src.size(), dst);
+        pos += dst.size();
+    }
+}
+
+std::string string_essentials::url_encode(const std::string &str)
+{
+    std::string result;
+    const char *dec2hex = "0123456789ABCDEF";
+    for (const uint8_t c : str) {
+        if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                                   || c == '-' || c == '_' || c == '.' || c == '~') {
+            result.append(1, c);
+        }
+        else {
+            result.append(1, '%');
+            result.append(1, dec2hex[c >> 4]);
+            result.append(1, dec2hex[c & 0b1111]);
+        }
+    }
+    return result;
 }
