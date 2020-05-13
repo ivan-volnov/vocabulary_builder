@@ -41,7 +41,9 @@ add_executable(${PROJECT_NAME}
     ${MM_SOURCE_FILES}
 )
 
-set_source_files_properties(${MM_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-x objective-c++")
+set_source_files_properties(${MM_SOURCE_FILES}
+    PROPERTIES COMPILE_FLAGS "-x objective-c++"
+)
 
 target_link_libraries(${PROJECT_NAME}
     string_essentials
