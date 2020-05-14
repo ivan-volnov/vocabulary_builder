@@ -29,7 +29,11 @@ public:
     std::string get_level_string() const;
     std::string get_pos_string() const;
 
-    // TODO: strip html tags and double spaces, trim trailing whitespaces
+    template<typename T>
+    void set_front(T &&value)
+    {
+        front = std::forward<T>(value);
+    }
 
     template<typename T>
     void set_back(T &&value)
@@ -52,7 +56,7 @@ public:
     void set_note_id(uint64_t id);
 
 private:
-    const std::string front;
+    std::string front;
     std::string back;
     string_set levels;
     string_set pos;

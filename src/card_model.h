@@ -31,8 +31,12 @@ public:
     void anki_add_card(Card &card) const;
     void anki_open_browser(const Card &card) const;
     void anki_reload_card(Card &card) const;
+    void anki_update_card(const Card &card) const;
 
     bool anki_find_card(Card &card) const;
+
+private:
+    static std::string clear_string(const std::string &string, bool &changed);
 
 private:
     std::vector<Card> cards;

@@ -58,13 +58,17 @@ void CardModel::load_from_kindle(const std::string &book)
     if (!ids.empty()) {
         anki->request("addTags", {{"notes", ids}, {"tags", "kindle"}});
     }
-    auto notes = anki->request("findNotes", {{"query", "tag:vb_beta"}});
-    for (const auto &note : anki->request("notesInfo", {{"notes", notes}})) {
+    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "tag:vb_beta"}})}})) {
         const auto front = note.at("fields").at("Front").at("value").get<std::string>();
         for (auto &card : cards) {
             if (card.get_front() == front) {
+                bool changed = false;
                 card.set_note_id(note.at("noteId").get<uint64_t>());
-                card.set_back(note.at("fields").at("Back").at("value").get<std::string>());
+                card.set_back(clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
+                card.set_pos(string_essentials::split<std::set>(clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
+                if (changed) {
+                    anki_update_card(card);
+                }
                 break;
             }
         }
@@ -128,8 +132,8 @@ void CardModel::say(const std::string &word) const
     {
         txt = std::regex_replace(txt, std::regex("\\bor\\b"), ",");
     }
-    string_essentials::replace(txt, "(", "");
-    string_essentials::replace(txt, ")", "");
+    string_essentials::erase(txt, "(");
+    string_essentials::erase(txt, ")");
     if (txt == "read, read, read") {
         txt = "read, red, red";
     }
@@ -167,24 +171,51 @@ void CardModel::anki_reload_card(Card &card) const
             continue;
         }
         auto note = anki->request("notesInfo", {{"notes", {card.get_note_id()}}}).at(0);
-        if (note.empty() || card.get_front() != note.at("fields").at("Front").at("value").get<std::string>()) {
+        if (note.empty()) {
             card.set_note_id(0);
             continue;
         }
-        card.set_back(note.at("fields").at("Back").at("value").get<std::string>());
-        card.set_pos(string_essentials::split<std::set>(note.at("fields").at("PoS").at("value").get<std::string>(), ", "));
+        bool changed = false;
+        card.set_front(clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed));
+        card.set_back(clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
+        card.set_pos(string_essentials::split<std::set>(clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
+        if (changed) {
+            anki_update_card(card);
+        }
         return;
     } while (anki_find_card(card));
-    // TODO: update anki note after stripping tags
+}
+
+void CardModel::anki_update_card(const Card &card) const
+{
+    anki->request("updateNoteFields", {{"note", {
+        {"id", card.get_note_id()},
+        {"fields", {
+             {"Front", card.get_front()},
+             {"Back", card.get_back()},
+             {"PoS", card.get_pos_string()} }},
+    }}});
 }
 
 bool CardModel::anki_find_card(Card &card) const
 {
-    auto notes = anki->request("findNotes", {{"query", "front:\"" + card.get_front() + "\""}});
+    auto notes = anki->request("findNotes", {{"query", "front:\"" + card.get_front() + "\" tag:vb_beta"}});
     if (notes.empty()) {
         card.set_note_id(0);
         return false;
     }
     card.set_note_id(notes.at(0).get<uint64_t>());
     return true;
+}
+
+std::string CardModel::clear_string(const std::string &string, bool &changed)
+{
+    auto str = string;
+    string_essentials::strip_html_tags(str);
+    string_essentials::trim(str);
+    string_essentials::replace_recursive(str, "  ", " ");
+    if (str != string) {
+        changed = true;
+    }
+    return str;
 }
