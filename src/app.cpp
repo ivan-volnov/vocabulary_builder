@@ -5,11 +5,8 @@
 namespace ColorScheme {
 
 constexpr auto Window = "window";
-constexpr auto Error =  "error";
-constexpr auto Gray =   "gray";
-constexpr auto Test =   "test";
-constexpr auto Test2 =  "test2";
-constexpr auto Test3 =  "test3";
+constexpr auto Error  = "error";
+constexpr auto Gray   = "gray";
 
 }
 
@@ -20,10 +17,6 @@ App::App()
     screen->init_color(ColorScheme::Window, COLOR_BLACK, COLOR_WHITE);
     screen->init_color(ColorScheme::Error, COLOR_RED, COLOR_TRANSPARRENT);
     screen->init_color(ColorScheme::Gray, 251, COLOR_TRANSPARRENT);
-
-    screen->init_color(ColorScheme::Test, COLOR_WHITE, COLOR_RED);
-    screen->init_color(ColorScheme::Test2, COLOR_WHITE, COLOR_BLUE);
-    screen->init_color(ColorScheme::Test3, COLOR_WHITE, COLOR_BLACK);
 
     screen->show_cursor(false);
 }
@@ -118,6 +111,7 @@ void MainWindow::current_card_idx_changed(size_t prev_card_idx)
 Footer::Footer() :
     CursesWindow(1)
 {
+
 }
 
 void Footer::paint() const
