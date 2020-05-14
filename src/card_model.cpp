@@ -107,9 +107,15 @@ void CardModel::look_up_in_safari(const std::string &word)
 {
     if (word != last_safari_word) {
         std::ostringstream ss;
-        ss << "tell application \"Safari\" to set the URL of the front document to \""
-           << "https://dictionary.cambridge.org/search/direct/?datasetsearch=" << cambridge_dictionary << "&q=" << string_essentials::url_encode(word)
-           << "\"";
+        ss << "set myURL to \"https://dictionary.cambridge.org/search/direct/?datasetsearch="
+                    << cambridge_dictionary << "&q=" << string_essentials::url_encode(word) << "\"\n"
+              "tell application \"Safari\"\n"
+              "    if the URL of the front document starts with \"https://dictionary.cambridge.org\" then\n"
+              "        set the URL of the front document to myURL\n"
+              "    else\n"
+              "        open location myURL\n"
+              "    end if\n"
+              "end tell";
         if (AppleScript::run_apple_script(ss.str())) {
             last_safari_word = word;
         }
