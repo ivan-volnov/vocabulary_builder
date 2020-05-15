@@ -75,12 +75,12 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
     else if (ch == 'r' && is_symbol) {
         model->anki_reload_card(model->get_card(current_card_idx));
     }
-    else if (ch == (is_symbol ? 'k' : KEY_UP)) {
+    else if (ch == (is_symbol ? 'k' : KEY_UP) || (ch == 'b' && is_symbol)) {
         if (current_card_idx > 0) {
             current_card_idx_changed(current_card_idx--);
         }
     }
-    else if (ch == (is_symbol ? 'j' : KEY_DOWN)) {
+    else if (ch == (is_symbol ? 'j' : KEY_DOWN) || (ch == 10 && is_symbol)) { // enter
         if (current_card_idx + 1 < model->size()) {
             current_card_idx_changed(current_card_idx++);
         }
