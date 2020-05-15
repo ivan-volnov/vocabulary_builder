@@ -27,6 +27,7 @@ CardModel::CardModel() :
 
 std::vector<std::string> CardModel::get_kindle_booklist() const
 {
+    assert(kindle_db);
     std::vector<std::string> result;
     auto sql = kindle_db->create_query();
     sql << "SELECT DISTINCT title FROM BOOK_INFO";
@@ -38,6 +39,7 @@ std::vector<std::string> CardModel::get_kindle_booklist() const
 
 void CardModel::load_from_kindle(const std::string &book, size_t &current_card_idx)
 {
+    assert(kindle_db);
     auto sql = kindle_db->create_query();
     sql << "SELECT DISTINCT w.stem\n"
            "FROM WORDS w\n"
@@ -79,6 +81,11 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
     }
     const auto middle = std::stable_partition(cards.begin(), cards.end(), [](const auto &card) { return !!card->get_note_id(); });
     current_card_idx = std::distance(cards.begin(), middle);
+}
+
+void CardModel::close_kindle_db()
+{
+    kindle_db.reset();
 }
 
 string_set_pair CardModel::get_word_info(const std::string &word) const

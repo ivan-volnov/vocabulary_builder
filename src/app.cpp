@@ -40,6 +40,7 @@ MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
         throw std::runtime_error("You must select a book first");
     }
     model->load_from_kindle(menu->get_item_string(), current_card_idx);
+    model->close_kindle_db();
     current_card_idx_changed(-1);
 }
 

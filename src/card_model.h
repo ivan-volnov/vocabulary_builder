@@ -17,6 +17,7 @@ public:
 
     std::vector<std::string> get_kindle_booklist() const;
     void load_from_kindle(const std::string &book, size_t &current_card_idx);
+    void close_kindle_db();
 
     string_set_pair get_word_info(const std::string &word) const;
 
