@@ -196,7 +196,11 @@ void CardModel::anki_reload_card(Card &card) const
             continue;
         }
         bool changed = false;
-        card.set_front(clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed));
+        auto front = clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed);
+        if (front != card.get_front()) {
+            anki->request("removeTags", {{"notes", {card.get_note_id()}}, {"tags", "vb_beta"}});
+            card.set_front(front);
+        }
         card.set_back(clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
         card.set_pos(string_essentials::split<std::set>(clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
         card.set_forms(clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
