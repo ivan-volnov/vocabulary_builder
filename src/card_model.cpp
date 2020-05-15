@@ -89,6 +89,16 @@ void CardModel::close_kindle_db()
     kindle_db.reset();
 }
 
+void CardModel::insert_new_card(const std::string &word, size_t idx)
+{
+    auto card = std::make_unique<Card>();
+    card->set_front(clear_string(word));
+    auto pair = get_word_info(card->get_front());
+    card->set_levels(std::move(pair.first));
+    card->set_pos(std::move(pair.second));
+    cards.insert(cards.begin() + idx, std::move(card));
+}
+
 string_set_pair CardModel::get_word_info(const std::string &word) const
 {
     string_set_pair pair;
@@ -236,12 +246,18 @@ bool CardModel::anki_find_card(Card &card) const
 
 std::string CardModel::clear_string(const std::string &string, bool &changed)
 {
+    auto str = clear_string(string);
+    if (str != string) {
+        changed = true;
+    }
+    return str;
+}
+
+std::string CardModel::clear_string(const std::string &string)
+{
     auto str = string;
     string_essentials::strip_html_tags(str);
     string_essentials::trim(str);
     string_essentials::replace_recursive(str, "  ", " ");
-    if (str != string) {
-        changed = true;
-    }
     return str;
 }

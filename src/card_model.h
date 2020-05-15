@@ -19,6 +19,8 @@ public:
     void load_from_kindle(const std::string &book, size_t &current_card_idx);
     void close_kindle_db();
 
+    void insert_new_card(const std::string &word, size_t idx);
+
     string_set_pair get_word_info(const std::string &word) const;
 
     Card &get_card(size_t idx);
@@ -38,6 +40,7 @@ public:
 
 private:
     static std::string clear_string(const std::string &string, bool &changed);
+    static std::string clear_string(const std::string &string);
 
 private:
     std::vector<std::unique_ptr<Card>> cards;

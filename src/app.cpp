@@ -66,6 +66,18 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
     if (ch == 27 && is_symbol) { // escape
         return PleaseExitModal;
     }
+    else if (ch == 'i' && is_symbol) {
+        if (auto screen = screen_ptr.lock()) {
+            screen->show_cursor(true);
+            auto line = screen->create<InputLine>();
+            line->run_modal();
+            if (!line->is_cancelled()) {
+                model->insert_new_card(line->get_text(), current_card_idx);
+                current_card_idx_changed(current_card_idx + 1);
+            }
+            screen->show_cursor(false);
+        }
+    }
     else if (ch == 'a' && is_symbol) {
         model->anki_add_card(model->get_card(current_card_idx));
     }
@@ -120,7 +132,7 @@ void Footer::paint() const
     wclear(win);
 //    whline(win, '_', get_width());
 //    wmove(win, 1, 0);
-    for (const std::string str : {"[ESC]Exit", "[A]Add", "[E]Edit", "[J]Next", "[K]Back", "[R]Reload"}) {
+    for (const std::string str : {"[A]Add", "[I]Insert", "[E]Edit", "[J]Next", "[K]Back", "[R]Reload"}) {
 //        wattron(win, A_STANDOUT );
         waddnstr(win, str.c_str(), std::min(str.size(), static_cast<size_t>(get_width() - getcurx(win))));
 //        wattroff(win, A_STANDOUT);
