@@ -2,12 +2,6 @@
 #include <string_essentials/string_essentials.hpp>
 
 
-Card::Card(std::string &&front, string_set &&levels, string_set &&pos) :
-    front(std::move(front)), levels(std::move(levels)), pos(std::move(pos))
-{
-
-}
-
 std::string Card::get_front() const
 {
     return front;

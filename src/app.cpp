@@ -39,7 +39,7 @@ MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
     if (menu->is_cancelled()) {
         throw std::runtime_error("You must select a book first");
     }
-    model->load_from_kindle(menu->get_item_string());
+    model->load_from_kindle(menu->get_item_string(), current_card_idx);
     current_card_idx_changed(-1);
 }
 

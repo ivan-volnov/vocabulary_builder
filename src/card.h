@@ -12,12 +12,11 @@ using string_set_tuple3 = std::tuple<string_set, string_set, string_set>;
 class Card
 {
 public:
-    Card(std::string &&front, string_set &&levels, string_set &&pos);
-
+    Card() = default;
     ~Card() = default;
     Card(const Card &) = delete;
     Card &operator=(const Card &) = delete;
-    Card(Card &&) = default;
+    Card(Card &&) = delete;
     Card &operator=(Card &&) = delete;
 
     std::string get_front() const;

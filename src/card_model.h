@@ -16,7 +16,7 @@ public:
     CardModel();
 
     std::vector<std::string> get_kindle_booklist() const;
-    void load_from_kindle(const std::string &book);
+    void load_from_kindle(const std::string &book, size_t &current_card_idx);
 
     string_set_pair get_word_info(const std::string &word) const;
 
@@ -39,7 +39,7 @@ private:
     static std::string clear_string(const std::string &string, bool &changed);
 
 private:
-    std::vector<Card> cards;
+    std::vector<std::unique_ptr<Card>> cards;
     std::shared_ptr<SqliteDatabase> kindle_db;
     std::shared_ptr<SqliteDatabase> vocabulary_profile_db;
     std::shared_ptr<SpeechEngine> speech;

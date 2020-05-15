@@ -36,7 +36,7 @@ std::vector<std::string> CardModel::get_kindle_booklist() const
     return result;
 }
 
-void CardModel::load_from_kindle(const std::string &book)
+void CardModel::load_from_kindle(const std::string &book, size_t &current_card_idx)
 {
     auto sql = kindle_db->create_query();
     sql << "SELECT DISTINCT w.stem\n"
@@ -51,7 +51,11 @@ void CardModel::load_from_kindle(const std::string &book)
         auto note = anki->request("findNotes", {{"query", "front:\"" + word + "\" -tag:vb_beta"}});
         if (note.empty()) {
             auto pair = get_word_info(word);
-            cards.emplace_back(std::move(word), std::move(pair.first), std::move(pair.second));
+            auto card = std::make_unique<Card>();
+            card->set_front(std::move(word));
+            card->set_levels(std::move(pair.first));
+            card->set_pos(std::move(pair.second));
+            cards.push_back(std::move(card));
         }
         ids.insert(note.begin(), note.end());
     }
@@ -61,18 +65,20 @@ void CardModel::load_from_kindle(const std::string &book)
     for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "tag:vb_beta"}})}})) {
         const auto front = note.at("fields").at("Front").at("value").get<std::string>();
         for (auto &card : cards) {
-            if (card.get_front() == front) {
+            if (card->get_front() == front) {
                 bool changed = false;
-                card.set_note_id(note.at("noteId").get<uint64_t>());
-                card.set_back(clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
-                card.set_pos(string_essentials::split<std::set>(clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
+                card->set_note_id(note.at("noteId").get<uint64_t>());
+                card->set_back(clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
+                card->set_pos(string_essentials::split<std::set>(clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
                 if (changed) {
-                    anki_update_card(card);
+                    anki_update_card(*card);
                 }
                 break;
             }
         }
     }
+    const auto middle = std::stable_partition(cards.begin(), cards.end(), [](const auto &card) { return !!card->get_note_id(); });
+    current_card_idx = std::distance(cards.begin(), middle);
 }
 
 string_set_pair CardModel::get_word_info(const std::string &word) const
@@ -90,12 +96,12 @@ string_set_pair CardModel::get_word_info(const std::string &word) const
 
 Card &CardModel::get_card(size_t idx)
 {
-    return cards.at(idx);
+    return *cards.at(idx);
 }
 
 const Card &CardModel::get_card(size_t idx) const
 {
-    return cards.at(idx);
+    return *cards.at(idx);
 }
 
 size_t CardModel::size() const
