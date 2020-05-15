@@ -21,6 +21,7 @@ public:
 
     std::string get_front() const;
     std::string get_back() const;
+    std::string get_forms() const;
     std::string get_level() const;
     string_set get_levels() const;
     string_set get_pos() const;
@@ -41,6 +42,12 @@ public:
     }
 
     template<typename T>
+    void set_forms(T &&value)
+    {
+        forms = std::forward<T>(value);
+    }
+
+    template<typename T>
     void set_levels(T &&value)
     {
         levels = std::forward<T>(value);
@@ -57,6 +64,7 @@ public:
 private:
     std::string front;
     std::string back;
+    std::string forms;
     string_set levels;
     string_set pos;
     uint64_t note_id = 0;

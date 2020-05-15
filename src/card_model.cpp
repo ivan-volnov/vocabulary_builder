@@ -72,6 +72,7 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
                 card->set_note_id(note.at("noteId").get<uint64_t>());
                 card->set_back(clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
                 card->set_pos(string_essentials::split<std::set>(clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
+                card->set_forms(clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
                 if (changed) {
                     anki_update_card(*card);
                 }
@@ -198,6 +199,7 @@ void CardModel::anki_reload_card(Card &card) const
         card.set_front(clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed));
         card.set_back(clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
         card.set_pos(string_essentials::split<std::set>(clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
+        card.set_forms(clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
         if (changed) {
             anki_update_card(card);
         }
@@ -212,6 +214,7 @@ void CardModel::anki_update_card(const Card &card) const
         {"fields", {
              {"Front", card.get_front()},
              {"Back", card.get_back()},
+             {"Forms", card.get_forms()},
              {"PoS", card.get_pos_string()} }},
     }}});
 }
