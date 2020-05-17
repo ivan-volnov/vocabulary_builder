@@ -12,17 +12,23 @@
 CardModel::CardModel() :
     cambridge_dictionary("english-russian")
 {
+    vocabulary_profile_db = SqliteDatabase::open_read_only(Config::instance().get_vocabulary_profile_filepath());
+    if (Config::instance().is_sound_enabled()) {
+        speech = std::make_shared<SpeechEngine>();
+    }
+    anki = std::make_shared<AnkiClient>();
+    if (anki->request("version").get<uint64_t>() < 6) {
+        throw std::runtime_error("AnkiConnect plugin is too old. Please update");
+    }
+}
+
+void CardModel::open_kindle_db()
+{
     const auto db_filepath = Config::instance().get_kindle_db_filepath();
     if (!std::filesystem::exists(db_filepath)) {
         throw std::runtime_error("Please connect your Kindle via USB cable first");
     }
     kindle_db = SqliteDatabase::open_read_only(db_filepath);
-    vocabulary_profile_db = SqliteDatabase::open_read_only(Config::instance().get_vocabulary_profile_filepath());
-    speech = std::make_shared<SpeechEngine>();
-    anki = std::make_shared<AnkiClient>();
-    if (anki->request("version").get<uint64_t>() < 6) {
-        throw std::runtime_error("AnkiConnect plugin is too old. Please update");
-    }
 }
 
 std::vector<std::string> CardModel::get_kindle_booklist() const

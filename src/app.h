@@ -7,10 +7,21 @@
 class CardModel;
 
 
+
+namespace ColorScheme {
+
+constexpr auto Window = "window";
+constexpr auto Error  = "error";
+constexpr auto Gray   = "gray";
+
+}
+
+
+
 class MainWindow : public CursesWindow
 {
 public:
-    MainWindow(std::shared_ptr<Screen> screen);
+    MainWindow(std::shared_ptr<Screen> screen, std::shared_ptr<CardModel> model_, size_t current_card_idx);
 
 public:
     void paint() const override;
@@ -22,9 +33,9 @@ private:
 
 private:
     std::weak_ptr<Screen> screen_ptr;
-    std::unique_ptr<CardModel> model;
+    std::shared_ptr<CardModel> model;
     std::string txt;
-    size_t current_card_idx = 0;
+    size_t current_card_idx;
 };
 
 

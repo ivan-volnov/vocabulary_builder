@@ -15,6 +15,7 @@ class CardModel
 public:
     CardModel();
 
+    void open_kindle_db();
     std::vector<std::string> get_kindle_booklist() const;
     void load_from_kindle(const std::string &book, size_t &current_card_idx);
     void close_kindle_db();

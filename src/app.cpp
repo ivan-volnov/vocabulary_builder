@@ -4,16 +4,10 @@
 
 
 
-MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
-    screen_ptr(screen), model(std::make_unique<CardModel>())
+MainWindow::MainWindow(std::shared_ptr<Screen> screen, std::shared_ptr<CardModel> model_, size_t current_card_idx) :
+    screen_ptr(screen), model(std::move(model_)), current_card_idx(current_card_idx)
 {
-    auto menu = screen->create<VerticalListMenu>(model->get_kindle_booklist());
-    menu->run_modal();
-    if (menu->is_cancelled()) {
-        throw std::runtime_error("You must select a book first");
-    }
-    model->load_from_kindle(menu->get_item_string(), current_card_idx);
-    model->close_kindle_db();
+    assert(model->size());
     current_card_idx_changed(-1);
 }
 
