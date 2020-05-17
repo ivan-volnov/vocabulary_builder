@@ -42,12 +42,14 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
     else if (ch == 'i' && is_symbol) {
         if (auto screen = screen_ptr.lock()) {
             screen->show_cursor(true);
-            auto line = screen->create<InputLine>();
+            auto border = screen->create<SimpleBorder>(4, 5);
+            auto line = border->create<InputLine>("New word: ");
             line->run_modal();
             if (!line->is_cancelled()) {
                 model->insert_new_card(line->get_text(), current_card_idx);
                 current_card_idx_changed(current_card_idx + 1);
             }
+            border->close();
             screen->show_cursor(false);
         }
     }
