@@ -10,7 +10,19 @@
 void run(int argc, char *argv[])
 {
     argh::parser cmdl(argc, argv);
-    Config::instance().set_sound_enabled(cmdl["s"]);
+    Config::instance().set_sound_enabled(cmdl[{"s", "sound"}]);
+
+    if (cmdl[{"h", "help"}]) {
+        std::cout << "Usage: vocabulary_builder [options]\n\n"
+                     "Optional arguments:\n"
+                     "-h --help               show this help message and exit\n"
+                     "-k --kindle             import cards from kindle\n"
+                     "-s --sound              read aloud current card\n"
+                     "--check_collection      check whole collection\n"
+                     "--fix_collection        fix whole collection\n"
+                  << std::endl;
+        return;
+    }
 
     auto model = std::make_shared<CardModel>();
 
@@ -32,7 +44,7 @@ void run(int argc, char *argv[])
 
     size_t current_card_idx = 0;
 
-    if (cmdl["kindle"]) {
+    if (cmdl[{"k", "kindle"}]) {
         model->open_kindle_db();
         auto menu = screen->create<VerticalListMenu>(model->get_kindle_booklist());
         menu->run_modal();
@@ -47,9 +59,10 @@ void run(int argc, char *argv[])
         auto border = screen->create<SimpleBorder>(3, 4);
         auto line = border->create<InputLine>("New word: ");
         line->run_modal();
-        if (!line->is_cancelled()) {
-            model->insert_new_card(line->get_text(), current_card_idx);
+        if (line->is_cancelled()) {
+            throw std::runtime_error("You must add at least one word");
         }
+        model->insert_new_card(line->get_text(), current_card_idx);
         border->close();
         screen->show_cursor(false);
     }
