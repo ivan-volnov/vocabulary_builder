@@ -13,7 +13,7 @@ void run(int argc, char *argv[])
     Config::instance().set_sound_enabled(cmdl[{"s", "sound"}]);
 
     if (cmdl[{"h", "help"}]) {
-        std::cout << "Usage: vocabulary_builder [options]\n\n"
+        std::cout << "Usage: " << argv[0] << " [options]\n\n"
                      "Optional arguments:\n"
                      "-h --help               show this help message and exit\n"
                      "-k --kindle             import cards from kindle\n"
