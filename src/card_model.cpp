@@ -1,5 +1,6 @@
 #include "card_model.h"
 #include <unordered_set>
+#include <iostream>
 #include <regex>
 #include <string_essentials/string_essentials.hpp>
 #include "sqlite_database/sqlite_database.h"
@@ -250,6 +251,73 @@ bool CardModel::anki_find_card(Card &card) const
     return true;
 }
 
+void CardModel::anki_check_collection() const
+{
+    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "\"deck:En::Vocabulary Profile\""}})}})) {
+        const auto front_old = note.at("fields").at("Front").at("value").get<std::string>();
+        const auto back_old = note.at("fields").at("Back").at("value").get<std::string>();
+        const auto pos_old = note.at("fields").at("PoS").at("value").get<std::string>();
+
+        const auto front = clear_string(front_old);
+        if (front != front_old) {
+            std::cout << "Fix front: " << front_old << " to: " << front << std::endl;
+        }
+
+        const auto back = clear_string(back_old);
+        if (back != back_old) {
+            std::cout << "Fix back: " << back_old << " to: " << back << std::endl;
+        }
+
+        const auto pos = string_essentials::join(string_essentials::split<std::set>(clear_string(pos_old), ", "), ", ");
+        if (pos != pos_old) {
+            std::cout << "Fix pos: " << pos_old << " to: " << pos << std::endl;
+        }
+    }
+}
+
+void CardModel::anki_fix_collection() const
+{
+    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "\"deck:En::Vocabulary Profile\""}})}})) {
+        const auto front_old = note.at("fields").at("Front").at("value").get<std::string>();
+        const auto back_old = note.at("fields").at("Back").at("value").get<std::string>();
+        const auto pos_old = note.at("fields").at("PoS").at("value").get<std::string>();
+        const auto note_id = note.at("noteId").get<uint64_t>();
+
+        const auto front = clear_string(front_old);
+        if (front != front_old) {
+            std::cout << "Fix front: " << front_old << " to: " << front << std::endl;
+            anki->request("updateNoteFields", {{"note", {
+                {"id", note_id},
+                {"fields", {
+                     {"Front", front},
+                }},
+            }}});
+        }
+
+        const auto back = clear_string(back_old);
+        if (back != back_old) {
+            std::cout << "Fix back: " << back_old << " to: " << back << std::endl;
+            anki->request("updateNoteFields", {{"note", {
+                {"id", note_id},
+                {"fields", {
+                     {"Back", back},
+                }},
+            }}});
+        }
+
+        const auto pos = string_essentials::join(string_essentials::split<std::set>(clear_string(pos_old), ", "), ", ");
+        if (pos != pos_old) {
+            std::cout << "Fix pos: " << pos_old << " to: " << pos << std::endl;
+            anki->request("updateNoteFields", {{"note", {
+                {"id", note_id},
+                {"fields", {
+                     {"PoS", pos}
+                }},
+            }}});
+        }
+    }
+}
+
 std::string CardModel::clear_string(const std::string &string, bool &changed)
 {
     auto str = clear_string(string);
@@ -263,7 +331,12 @@ std::string CardModel::clear_string(const std::string &string)
 {
     auto str = string;
     string_essentials::strip_html_tags(str);
-    string_essentials::trim(str);
+    string_essentials::replace(str, ",", ", ");
+    string_essentials::replace(str, "!", "! ");
+    string_essentials::replace(str, " )", ")");
+    string_essentials::replace(str, "( ", "(");
+    string_essentials::replace(str, " ,", ",");
     string_essentials::replace_recursive(str, "  ", " ");
+    string_essentials::trim(str);
     return str;
 }

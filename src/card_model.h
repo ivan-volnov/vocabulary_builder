@@ -39,6 +39,9 @@ public:
 
     bool anki_find_card(Card &card) const;
 
+    void anki_check_collection() const;
+    void anki_fix_collection() const;
+
 private:
     static std::string clear_string(const std::string &string, bool &changed);
     static std::string clear_string(const std::string &string);
