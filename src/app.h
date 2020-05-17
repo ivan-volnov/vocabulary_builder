@@ -2,25 +2,9 @@
 #define APP_H
 
 #include <tiled_ncurses/tiled_ncurses.hpp>
-#include <vector>
-#include <string>
 
 
 class CardModel;
-
-
-class App
-{
-public:
-    App();
-    void run();
-
-    App(const App &) = delete;
-    App &operator=(const App &) = delete;
-
-private:
-    std::shared_ptr<Screen> screen;
-};
 
 
 class MainWindow : public CursesWindow

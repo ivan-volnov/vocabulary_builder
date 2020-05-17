@@ -1,69 +1,48 @@
 #include "app.h"
 #include <iostream>
-#include <libs/argparse.hpp>
+#include <libs/argh.h>
 #include "utility/tools.h"
+#include "card_model.h"
 #include "config.h"
 
 
-void run_app(argparse::ArgumentParser &program)
-{
-    Config::instance().set_sound_enabled(program.get<bool>("--sound") == true);
-//    auto trainer = std::make_shared<Trainer>();
-//    if (program.get<bool>("--stats")) {
-//        trainer->show_stats();
-//        return;
-//    }
-//    if (program.get<bool>("--import")) {
-//        auto query = program.present("--anki_query");
-//        auto count = trainer->anki_import(query ? *query : "");
-//        std::cout << "Successfully imported " << count << " cards" << std::endl;
-//        return;
-//    }
-//    if (!trainer->load()) {
-//        std::cout << "No cards to study. Please import some" << std::endl;
-//        return;
-//    }
-    {
-        App app;
-        app.run();
-    }
-//    trainer->show_stats();
+namespace ColorScheme {
+
+constexpr auto Window = "window";
+constexpr auto Error  = "error";
+constexpr auto Gray   = "gray";
+
 }
+
+
+
+void run(int argc, char *argv[])
+{
+    argh::parser cmdl(argc, argv);
+    Config::instance().set_sound_enabled(cmdl["sound"]);
+    {
+        auto screen = std::make_shared<Screen>();
+        screen->init_color(ColorScheme::Window, COLOR_BLACK, COLOR_WHITE);
+        screen->init_color(ColorScheme::Error, COLOR_RED, COLOR_TRANSPARRENT);
+        screen->init_color(ColorScheme::Gray, 251, COLOR_TRANSPARRENT);
+        screen->show_cursor(false);
+        auto layout = screen->create<SimpleBorder>()->create<VerticalLayout>();
+        layout->create<SimpleBorder>(3, 4)->create<MainWindow>(screen);
+        layout->create<Footer>();
+        screen->run_modal();
+    }
+}
+
 
 
 int main(int argc, char *argv[])
 {
-    argparse::ArgumentParser program("vocabulary_builder");
-    program.add_argument("-i", "--import")
-           .help("import cards from anki")
-           .default_value(false)
-           .implicit_value(true);
-    program.add_argument("-a", "--anki_query")
-           .help("specify anki query for the import");
-    program.add_argument("-s", "--sound")
-           .help("read aloud the current phrase while typing")
-           .default_value(false)
-           .implicit_value(true);
-    program.add_argument("-S", "--stats")
-           .help("show stats and exit")
-           .default_value(false)
-           .implicit_value(true);
-
-    try {
-        program.parse_args(argc, argv);
-    }
-    catch (const std::runtime_error &e) {
-        std::cerr << e.what() << std::endl;
-        std::cout << program;
-        return 1;
-    }
-
     if (tools::am_I_being_debugged()) {
-        run_app(program);
+        run(argc, argv);
     }
     else {
         try {
-            run_app(program);
+            run(argc, argv);
         }
         catch (const std::exception &e) {
             std::cerr << "Error: " << e.what() << std::endl;

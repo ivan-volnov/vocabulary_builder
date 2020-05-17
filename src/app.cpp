@@ -2,33 +2,6 @@
 #include <ncurses.h>
 #include "card_model.h"
 
-namespace ColorScheme {
-
-constexpr auto Window = "window";
-constexpr auto Error  = "error";
-constexpr auto Gray   = "gray";
-
-}
-
-
-App::App()
-{
-    screen = std::make_shared<Screen>();
-    screen->init_color(ColorScheme::Window, COLOR_BLACK, COLOR_WHITE);
-    screen->init_color(ColorScheme::Error, COLOR_RED, COLOR_TRANSPARRENT);
-    screen->init_color(ColorScheme::Gray, 251, COLOR_TRANSPARRENT);
-
-    screen->show_cursor(false);
-}
-
-void App::run()
-{
-    auto layout = screen->create<SimpleBorder>()->create<VerticalLayout>();
-    layout->create<SimpleBorder>(3, 4)->create<MainWindow>(screen);
-    layout->create<Footer>();
-    screen->run_modal();
-}
-
 
 
 MainWindow::MainWindow(std::shared_ptr<Screen> screen) :
