@@ -214,11 +214,7 @@ void CardModel::anki_reload_card(Card &card) const
             continue;
         }
         bool changed = false;
-        auto front = tools::clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed);
-        if (front != card.get_front()) {
-            anki->request("removeTags", {{"notes", {card.get_note_id()}}, {"tags", "vb_beta"}});
-            card.set_front(front);
-        }
+        card.set_front(tools::clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed));
         card.set_back(tools::clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
         card.set_pos(string_essentials::split<std::set>(tools::clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
         card.set_forms(tools::clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
@@ -243,7 +239,7 @@ void CardModel::anki_update_card(const Card &card) const
 
 bool CardModel::anki_find_card(Card &card) const
 {
-    auto notes = anki->request("findNotes", {{"query", "front:\"" + card.get_front() + "\" tag:vb_beta"}});
+    auto notes = anki->request("findNotes", {{"query", "front:\"" + card.get_front() + "\""}});
     if (notes.empty()) {
         card.set_note_id(0);
         return false;
