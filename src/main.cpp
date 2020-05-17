@@ -27,6 +27,7 @@ void run(int argc, char *argv[])
     screen->init_color(ColorScheme::Window, COLOR_BLACK, COLOR_WHITE);
     screen->init_color(ColorScheme::Error, COLOR_RED, COLOR_TRANSPARRENT);
     screen->init_color(ColorScheme::Gray, 251, COLOR_TRANSPARRENT);
+    screen->init_color(ColorScheme::Blue, COLOR_BLUE, COLOR_TRANSPARRENT);
     screen->show_cursor(false);
 
     size_t current_card_idx = 0;
@@ -43,7 +44,7 @@ void run(int argc, char *argv[])
     }
     else {
         screen->show_cursor(true);
-        auto border = screen->create<SimpleBorder>(4, 5);
+        auto border = screen->create<SimpleBorder>(3, 4);
         auto line = border->create<InputLine>("New word: ");
         line->run_modal();
         if (!line->is_cancelled()) {
@@ -53,9 +54,11 @@ void run(int argc, char *argv[])
         screen->show_cursor(false);
     }
 
-    auto layout = screen->create<SimpleBorder>()->create<VerticalLayout>();
-    layout->create<SimpleBorder>(3, 4)->create<MainWindow>(screen, model, current_card_idx);
+    auto layout = screen->create<VerticalLayout>();
+    auto border = layout->create<SimpleBorder>(3, 4);
     layout->create<Footer>();
+    auto progress = layout->create<ProgressBar>(ColorScheme::Blue);
+    border->create<MainWindow>(screen, progress, model, current_card_idx);
     screen->run_modal();
 }
 
