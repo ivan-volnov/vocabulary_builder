@@ -7,6 +7,7 @@
 #include "utility/anki_client.h"
 #include "utility/apple_script.h"
 #include "utility/speech_engine.h"
+#include "utility/tools.h"
 #include "config.h"
 
 
@@ -77,9 +78,9 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
             if (card->get_front() == front) {
                 bool changed = false;
                 card->set_note_id(note.at("noteId").get<uint64_t>());
-                card->set_back(clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
-                card->set_pos(string_essentials::split<std::set>(clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
-                card->set_forms(clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
+                card->set_back(tools::clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
+                card->set_pos(string_essentials::split<std::set>(tools::clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
+                card->set_forms(tools::clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
                 if (changed) {
                     anki_update_card(*card);
                 }
@@ -99,7 +100,7 @@ void CardModel::close_kindle_db()
 void CardModel::insert_new_card(const std::string &word, size_t idx)
 {
     auto card = std::make_unique<Card>();
-    card->set_front(clear_string(word));
+    card->set_front(tools::clear_string(word));
     auto pair = get_word_info(card->get_front());
     card->set_levels(std::move(pair.first));
     card->set_pos(std::move(pair.second));
@@ -213,14 +214,14 @@ void CardModel::anki_reload_card(Card &card) const
             continue;
         }
         bool changed = false;
-        auto front = clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed);
+        auto front = tools::clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed);
         if (front != card.get_front()) {
             anki->request("removeTags", {{"notes", {card.get_note_id()}}, {"tags", "vb_beta"}});
             card.set_front(front);
         }
-        card.set_back(clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
-        card.set_pos(string_essentials::split<std::set>(clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
-        card.set_forms(clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
+        card.set_back(tools::clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
+        card.set_pos(string_essentials::split<std::set>(tools::clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
+        card.set_forms(tools::clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
         if (changed) {
             anki_update_card(card);
         }
@@ -251,92 +252,48 @@ bool CardModel::anki_find_card(Card &card) const
     return true;
 }
 
-void CardModel::anki_check_collection() const
-{
-    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "\"deck:En::Vocabulary Profile\""}})}})) {
-        const auto front_old = note.at("fields").at("Front").at("value").get<std::string>();
-        const auto back_old = note.at("fields").at("Back").at("value").get<std::string>();
-        const auto pos_old = note.at("fields").at("PoS").at("value").get<std::string>();
-
-        const auto front = clear_string(front_old);
-        if (front != front_old) {
-            std::cout << "Fix front: " << front_old << " to: " << front << std::endl;
-        }
-
-        const auto back = clear_string(back_old);
-        if (back != back_old) {
-            std::cout << "Fix back: " << back_old << " to: " << back << std::endl;
-        }
-
-        const auto pos = string_essentials::join(string_essentials::split<std::set>(clear_string(pos_old), ", "), ", ");
-        if (pos != pos_old) {
-            std::cout << "Fix pos: " << pos_old << " to: " << pos << std::endl;
-        }
-    }
-}
-
-void CardModel::anki_fix_collection() const
+void CardModel::anki_fix_collection(bool commit) const
 {
     for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "\"deck:En::Vocabulary Profile\""}})}})) {
         const auto front_old = note.at("fields").at("Front").at("value").get<std::string>();
         const auto back_old = note.at("fields").at("Back").at("value").get<std::string>();
         const auto pos_old = note.at("fields").at("PoS").at("value").get<std::string>();
         const auto note_id = note.at("noteId").get<uint64_t>();
-
-        const auto front = clear_string(front_old);
+        const auto front = tools::clear_string(front_old);
         if (front != front_old) {
             std::cout << "Fix front: " << front_old << " to: " << front << std::endl;
-            anki->request("updateNoteFields", {{"note", {
-                {"id", note_id},
-                {"fields", {
-                     {"Front", front},
-                }},
-            }}});
+            if (commit) {
+                anki->request("updateNoteFields", {{"note", {
+                    {"id", note_id},
+                    {"fields", {
+                         {"Front", front},
+                    }},
+                }}});
+            }
         }
-
-        const auto back = clear_string(back_old);
+        const auto back = tools::clear_string(back_old);
         if (back != back_old) {
             std::cout << "Fix back: " << back_old << " to: " << back << std::endl;
-            anki->request("updateNoteFields", {{"note", {
-                {"id", note_id},
-                {"fields", {
-                     {"Back", back},
-                }},
-            }}});
+            if (commit) {
+                anki->request("updateNoteFields", {{"note", {
+                    {"id", note_id},
+                    {"fields", {
+                         {"Back", back},
+                    }},
+                }}});
+            }
         }
-
-        const auto pos = string_essentials::join(string_essentials::split<std::set>(clear_string(pos_old), ", "), ", ");
+        const auto pos = string_essentials::join(string_essentials::split<std::set>(tools::clear_string(pos_old), ", "), ", ");
         if (pos != pos_old) {
             std::cout << "Fix pos: " << pos_old << " to: " << pos << std::endl;
-            anki->request("updateNoteFields", {{"note", {
-                {"id", note_id},
-                {"fields", {
-                     {"PoS", pos}
-                }},
-            }}});
+            if (commit) {
+                anki->request("updateNoteFields", {{"note", {
+                    {"id", note_id},
+                    {"fields", {
+                         {"PoS", pos}
+                    }},
+                }}});
+            }
         }
     }
-}
-
-std::string CardModel::clear_string(const std::string &string, bool &changed)
-{
-    auto str = clear_string(string);
-    if (str != string) {
-        changed = true;
-    }
-    return str;
-}
-
-std::string CardModel::clear_string(const std::string &string)
-{
-    auto str = string;
-    string_essentials::strip_html_tags(str);
-    string_essentials::replace(str, ",", ", ");
-    string_essentials::replace(str, "!", "! ");
-    string_essentials::replace(str, " )", ")");
-    string_essentials::replace(str, "( ", "(");
-    string_essentials::replace(str, " ,", ",");
-    string_essentials::replace_recursive(str, "  ", " ");
-    string_essentials::trim(str);
-    return str;
 }

@@ -15,14 +15,13 @@ void run(int argc, char *argv[])
     auto model = std::make_shared<CardModel>();
 
     if (cmdl["check_collection"]) {
-        model->anki_check_collection();
+        model->anki_fix_collection(false);
         return;
     }
     if (cmdl["fix_collection"]) {
-        model->anki_fix_collection();
+        model->anki_fix_collection(true);
         return;
     }
-
 
     {
         auto screen = std::make_shared<Screen>();
