@@ -9,7 +9,7 @@
 
 void run(int argc, char *argv[])
 {
-    argh::parser cmdl(argc, argv);
+    argh::parser cmdl(argc, argv, argh::parser::SINGLE_DASH_IS_MULTIFLAG);
     Config::instance().set_sound_enabled(cmdl[{"s", "sound"}]);
 
     if (cmdl[{"h", "help"}]) {
