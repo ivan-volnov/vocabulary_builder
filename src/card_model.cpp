@@ -185,7 +185,7 @@ void CardModel::anki_add_card(Card &card) const
         tags.insert("kindle");
         tags.insert("vb_beta");
         auto note = anki->request("addNotes", {{"notes", {{
-            {"deckName", "En::Vocabulary Profile::" + card.get_level()},
+            {"deckName", "Vocabulary Profile::" + card.get_level()},
             {"modelName", "Main en-GB"},
             {"fields", {
                  {"Front", card.get_front()},
@@ -250,7 +250,7 @@ bool CardModel::anki_find_card(Card &card) const
 
 void CardModel::anki_fix_collection(bool commit) const
 {
-    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "\"deck:En::Vocabulary Profile\""}})}})) {
+    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\""}})}})) {
         const auto front_old = note.at("fields").at("Front").at("value").get<std::string>();
         const auto back_old = note.at("fields").at("Back").at("value").get<std::string>();
         const auto pos_old = note.at("fields").at("PoS").at("value").get<std::string>();
