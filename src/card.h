@@ -25,6 +25,7 @@ public:
     std::string get_level() const;
     string_set get_levels() const;
     string_set get_pos() const;
+    string_set get_tags() const;
     uint64_t get_note_id() const;
     std::string get_level_string() const;
     std::string get_pos_string() const;
@@ -59,6 +60,8 @@ public:
         pos = std::forward<T>(value);
     }
 
+    void add_tag(const std::string &tag);
+
     void set_note_id(uint64_t id);
 
 private:
@@ -67,6 +70,7 @@ private:
     std::string forms;
     string_set levels;
     string_set pos;
+    string_set tags;
     uint64_t note_id = 0;
 };
 

@@ -65,6 +65,7 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
             card->set_front(std::move(word));
             card->set_levels(std::move(pair.first));
             card->set_pos(std::move(pair.second));
+            card->add_tag("kindle");
             cards.push_back(std::move(card));
         }
         ids.insert(note.begin(), note.end());
@@ -181,8 +182,7 @@ void CardModel::say(const std::string &word) const
 void CardModel::anki_add_card(Card &card) const
 {
     if (!anki_find_card(card)) {
-        auto tags = card.get_levels();
-        tags.insert("kindle");
+        auto tags = card.get_tags();
         tags.insert("vb_beta");
         auto note = anki->request("addNotes", {{"notes", {{
             {"deckName", "Vocabulary Profile::" + card.get_level()},

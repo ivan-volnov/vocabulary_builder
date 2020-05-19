@@ -32,6 +32,13 @@ string_set Card::get_pos() const
     return levels;
 }
 
+string_set Card::get_tags() const
+{
+    auto result = tags;
+    result.insert(levels.begin(), levels.end());
+    return result;
+}
+
 uint64_t Card::get_note_id() const
 {
     return note_id;
@@ -45,6 +52,11 @@ std::string Card::get_level_string() const
 std::string Card::get_pos_string() const
 {
     return string_essentials::join(pos, ", ");
+}
+
+void Card::add_tag(const std::string &tag)
+{
+    tags.insert(tag);
 }
 
 void Card::set_note_id(uint64_t id)
