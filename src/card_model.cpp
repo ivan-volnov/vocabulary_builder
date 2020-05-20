@@ -185,7 +185,7 @@ void CardModel::anki_add_card(Card &card) const
         auto tags = card.get_tags();
         tags.insert("vb_beta");
         auto note = anki->request("addNotes", {{"notes", {{
-            {"deckName", "Vocabulary Profile::" + card.get_level()},
+            {"deckName", "Vocabulary Profile"},
             {"modelName", "Main en-GB"},
             {"fields", {
                  {"Front", card.get_front()},
