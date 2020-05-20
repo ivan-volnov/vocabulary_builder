@@ -98,6 +98,26 @@ void CardModel::close_kindle_db()
     kindle_db.reset();
 }
 
+void CardModel::load_suspended_cards()
+{
+    for (const auto &note_id : anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\" is:suspended -tag:leech"}})) {
+        auto card = std::make_unique<Card>();
+        card->set_note_id(note_id.get<uint64_t>());
+        anki_reload_card(*card);
+        cards.push_back(std::move(card));
+    }
+}
+
+void CardModel::load_leech_cards()
+{
+    for (const auto &note_id : anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\" tag:leech"}})) {
+        auto card = std::make_unique<Card>();
+        card->set_note_id(note_id.get<uint64_t>());
+        anki_reload_card(*card);
+        cards.push_back(std::move(card));
+    }
+}
+
 void CardModel::insert_new_card(const std::string &word, size_t idx)
 {
     auto card = std::make_unique<Card>();

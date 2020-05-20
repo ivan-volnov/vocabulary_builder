@@ -17,7 +17,9 @@ void run(int argc, char *argv[])
                      "Optional arguments:\n"
                      "-h --help               show this help message and exit\n"
                      "-k --kindle             import cards from kindle\n"
+                     "-l --leech              work with leech cards\n"
                      "-s --sound              read aloud current card\n"
+                     "--suspended             work with suspended cards\n"
                      "--check_collection      check whole collection\n"
                      "--fix_collection        fix whole collection\n"
                   << std::endl;
@@ -53,6 +55,12 @@ void run(int argc, char *argv[])
         }
         model->load_from_kindle(menu->get_item_string(), current_card_idx);
         model->close_kindle_db();
+    }
+    else if (cmdl[{"l", "leech"}]) {
+        model->load_leech_cards();
+    }
+    else if (cmdl[{"suspended"}]) {
+        model->load_suspended_cards();
     }
     else {
         screen->show_cursor(true);

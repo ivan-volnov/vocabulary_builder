@@ -20,6 +20,9 @@ public:
     void load_from_kindle(const std::string &book, size_t &current_card_idx);
     void close_kindle_db();
 
+    void load_suspended_cards();
+    void load_leech_cards();
+
     void insert_new_card(const std::string &word, size_t idx);
 
     string_set_pair get_word_info(const std::string &word) const;
