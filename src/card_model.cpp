@@ -58,7 +58,7 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
     std::unordered_set<uint64_t> ids;
     while (sql.step()) {
         auto word = sql.get_string();
-        auto note = anki->request("findNotes", {{"query", "front:\"" + word + "\" -tag:vb_beta"}});
+        auto note = anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\" front:\"" + word + "\" -tag:vb_beta"}});
         if (note.empty()) {
             auto pair = get_word_info(word);
             auto card = std::make_unique<Card>();
@@ -91,6 +91,7 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
     }
     const auto middle = std::stable_partition(cards.begin(), cards.end(), [](const auto &card) { return !!card->get_note_id(); });
     current_card_idx = std::distance(cards.begin(), middle);
+    std::stable_partition(middle, cards.end(), [](const auto &card) { return !card->get_levels().empty(); });
 }
 
 void CardModel::close_kindle_db()
@@ -219,7 +220,7 @@ void CardModel::anki_add_card(Card &card) const
 
 void CardModel::anki_open_browser(const Card &card) const
 {
-    anki->request("guiBrowse", {{"query", "front:\"" + card.get_front() + "\""}});
+    anki->request("guiBrowse", {{"query", "\"deck:Vocabulary Profile\" front:\"" + card.get_front() + "\""}});
 }
 
 void CardModel::anki_reload_card(Card &card) const
@@ -259,7 +260,7 @@ void CardModel::anki_update_card(const Card &card) const
 
 bool CardModel::anki_find_card(Card &card) const
 {
-    auto notes = anki->request("findNotes", {{"query", "front:\"" + card.get_front() + "\""}});
+    auto notes = anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\" front:\"" + card.get_front() + "\""}});
     if (notes.empty()) {
         card.set_note_id(0);
         return false;
