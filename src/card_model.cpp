@@ -58,7 +58,7 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
     std::unordered_set<uint64_t> ids;
     while (sql.step()) {
         auto word = sql.get_string();
-        auto note = anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\" front:\"" + word + "\" -tag:vb_beta"}});
+        auto note = anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + word + "\" -tag:vb_beta"}});
         if (note.empty()) {
             auto pair = get_word_info(word);
             auto card = std::make_unique<Card>();
@@ -101,7 +101,7 @@ void CardModel::close_kindle_db()
 
 void CardModel::load_suspended_cards()
 {
-    for (const auto &note_id : anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\" is:suspended -tag:leech"}})) {
+    for (const auto &note_id : anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" is:suspended -tag:leech"}})) {
         auto card = std::make_unique<Card>();
         card->set_note_id(note_id.get<uint64_t>());
         anki_reload_card(*card);
@@ -111,7 +111,7 @@ void CardModel::load_suspended_cards()
 
 void CardModel::load_leech_cards()
 {
-    for (const auto &note_id : anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\" tag:leech"}})) {
+    for (const auto &note_id : anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" tag:leech"}})) {
         auto card = std::make_unique<Card>();
         card->set_note_id(note_id.get<uint64_t>());
         anki_reload_card(*card);
@@ -206,7 +206,7 @@ void CardModel::anki_add_card(Card &card) const
         auto tags = card.get_tags();
         tags.insert("vb_beta");
         auto note = anki->request("addNotes", {{"notes", {{
-            {"deckName", "Vocabulary Profile"},
+            {"deckName", Config::get<std::string>("deck")},
             {"modelName", "Main en-GB"},
             {"fields", {
                  {"Front", card.get_front()},
@@ -220,7 +220,7 @@ void CardModel::anki_add_card(Card &card) const
 
 void CardModel::anki_open_browser(const Card &card) const
 {
-    anki->request("guiBrowse", {{"query", "\"deck:Vocabulary Profile\" front:\"" + card.get_front() + "\""}});
+    anki->request("guiBrowse", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + card.get_front() + "\""}});
 }
 
 void CardModel::anki_reload_card(Card &card) const
@@ -260,7 +260,7 @@ void CardModel::anki_update_card(const Card &card) const
 
 bool CardModel::anki_find_card(Card &card) const
 {
-    auto notes = anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\" front:\"" + card.get_front() + "\""}});
+    auto notes = anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + card.get_front() + "\""}});
     if (notes.empty()) {
         card.set_note_id(0);
         return false;
@@ -271,7 +271,7 @@ bool CardModel::anki_find_card(Card &card) const
 
 void CardModel::anki_fix_collection(bool commit) const
 {
-    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "\"deck:Vocabulary Profile\""}})}})) {
+    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\""}})}})) {
         const auto front_old = note.at("fields").at("Front").at("value").get<std::string>();
         const auto back_old = note.at("fields").at("Back").at("value").get<std::string>();
         const auto pos_old = note.at("fields").at("PoS").at("value").get<std::string>();
