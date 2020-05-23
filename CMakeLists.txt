@@ -11,8 +11,6 @@ add_subdirectory(libs/sqlite_database)
 add_subdirectory(libs/string_essentials)
 add_subdirectory(libs/tiled_ncurses)
 
-include_directories(./)
-
 set(MM_SOURCE_FILES
     src/utility/apple_script.mm
 )
@@ -42,6 +40,10 @@ add_executable(${PROJECT_NAME}
 
 set_source_files_properties(${MM_SOURCE_FILES}
     PROPERTIES COMPILE_FLAGS "-x objective-c++"
+)
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ./
 )
 
 target_link_libraries(${PROJECT_NAME}
