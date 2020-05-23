@@ -51,7 +51,6 @@ private:
     std::shared_ptr<SpeechEngine> speech;
     std::shared_ptr<AnkiClient> anki;
     std::string last_safari_word;
-    std::string cambridge_dictionary;
 };
 
 

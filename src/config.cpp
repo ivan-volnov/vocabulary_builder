@@ -21,6 +21,8 @@ Config::Config() :
     }
     else {
         json["deck"] = "Vocabulary Profile";
+        json["card_model"] = "Main en-GB";
+        json["cambridge_dictionary"] = "english-russian";
     }
 }
 

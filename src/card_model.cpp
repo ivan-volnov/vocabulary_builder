@@ -11,8 +11,7 @@
 #include "config.h"
 
 
-CardModel::CardModel() :
-    cambridge_dictionary("english-russian")
+CardModel::CardModel()
 {
     vocabulary_profile_db = SqliteDatabase::open_read_only(Config::instance().get_vocabulary_profile_filepath());
     if (Config::instance().is_sound_enabled()) {
@@ -162,7 +161,7 @@ void CardModel::look_up_in_safari(const std::string &word)
     if (word != last_safari_word) {
         std::ostringstream ss;
         ss << "set myURL to \"https://dictionary.cambridge.org/search/direct/?datasetsearch="
-                    << cambridge_dictionary << "&q=" << string_essentials::url_encode(word) << "\"\n"
+                    << Config::get<std::string>("cambridge_dictionary") << "&q=" << string_essentials::url_encode(word) << "\"\n"
               "tell application \"Safari\"\n"
               "    if the URL of the front document starts with \"https://dictionary.cambridge.org\" then\n"
               "        set the URL of the front document to myURL\n"
@@ -207,7 +206,7 @@ void CardModel::anki_add_card(Card &card) const
         tags.insert("vb_beta");
         auto note = anki->request("addNotes", {{"notes", {{
             {"deckName", Config::get<std::string>("deck")},
-            {"modelName", "Main en-GB"},
+            {"modelName", Config::get<std::string>("card_model")},
             {"fields", {
                  {"Front", card.get_front()},
                  {"PoS", card.get_pos_string()} }},
