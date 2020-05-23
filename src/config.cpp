@@ -6,7 +6,7 @@
 
 
 Config::Config() :
-    json({})
+    json({}), json_state({})
 {
     const char *homedir = getenv("HOME");
     if (homedir == nullptr) {
@@ -24,6 +24,9 @@ Config::Config() :
         json["card_model"] = "Main en-GB";
         json["cambridge_dictionary"] = "english-russian";
     }
+    if (auto conf = get_state_filepath(); std::filesystem::exists(conf)) {
+        std::ifstream(conf) >> json_state;
+    }
 }
 
 bool Config::is_sound_enabled() const
@@ -40,6 +43,7 @@ Config::~Config()
 {
     try {
         std::ofstream(get_config_filepath()) << std::setw(4) << json;
+        std::ofstream(get_state_filepath()) << std::setw(4) << json_state;
     }
     catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;

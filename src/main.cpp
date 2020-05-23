@@ -47,14 +47,23 @@ void run(int argc, char *argv[])
     size_t current_card_idx = 0;
 
     if (cmdl[{"k", "kindle"}]) {
+        size_t item_idx = 0;
         model->open_kindle_db();
-        auto menu = screen->create<VerticalListMenu>(model->get_kindle_booklist());
+        auto booklist = model->get_kindle_booklist();
+        if (auto last_book = Config::get_state<std::string>("kindle_book"); !last_book.empty()) {
+            auto it = std::find(booklist.begin(), booklist.end(), last_book);
+            if (it != booklist.end()) {
+                item_idx = std::distance(booklist.begin(), it);
+            }
+        }
+        auto menu = screen->create<VerticalListMenu>(std::move(booklist), item_idx);
         menu->run_modal();
         if (menu->is_cancelled()) {
             throw std::runtime_error("You must select a book first");
         }
         model->load_from_kindle(menu->get_item_string(), current_card_idx);
         model->close_kindle_db();
+        Config::set_state("kindle_book", menu->get_item_string());
     }
     else if (cmdl[{"l", "leech"}]) {
         model->load_leech_cards();
