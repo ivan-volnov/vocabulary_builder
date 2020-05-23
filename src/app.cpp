@@ -1,6 +1,7 @@
 #include "app.h"
 #include <ncurses.h>
 #include "card_model.h"
+#include "config.h"
 
 
 
@@ -9,6 +10,7 @@ MainWindow::MainWindow(std::shared_ptr<Screen> screen, std::weak_ptr<ProgressBar
 {
     assert(model->size());
     current_card_idx_changed(-1);
+    skipped_list = Config::get_state<decltype(skipped_list)>("skipped_list");
 }
 
 void MainWindow::paint() const
@@ -72,6 +74,11 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
     return PleasePaint;
 }
 
+void MainWindow::save_state()
+{
+    Config::set_state("skipped_list", skipped_list);
+}
+
 void MainWindow::print(const std::string &str) const
 {
     waddnstr(win, str.c_str(), str.size());
@@ -89,6 +96,15 @@ void MainWindow::current_card_idx_changed(size_t prev_card_idx)
     auto word = model->get_card(current_card_idx).get_front();
     model->say(word);
     model->look_up_in_safari(word);
+    if (current_card_idx > prev_card_idx) {
+        const auto &card = model->get_card(prev_card_idx);
+        if (!card.get_note_id()) {
+            skipped_list.insert(card.get_front());
+        }
+    }
+    else {
+        skipped_list.erase(word);
+    }
 }
 
 

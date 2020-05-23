@@ -88,8 +88,9 @@ void run(int argc, char *argv[])
     auto border = layout->create<SimpleBorder>(3, 4);
     layout->create<Footer>();
     auto progress = layout->create<ProgressBar>(ColorScheme::Blue);
-    border->create<MainWindow>(screen, progress, model, current_card_idx);
+    auto main_window = border->create<MainWindow>(screen, progress, model, current_card_idx);
     screen->run_modal();
+    main_window->save_state();
 }
 
 

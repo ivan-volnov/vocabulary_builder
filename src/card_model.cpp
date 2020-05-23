@@ -57,7 +57,7 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
     std::unordered_set<uint64_t> ids;
     while (sql.step()) {
         auto word = sql.get_string();
-        auto note = anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + word + "\" -tag:vb_beta"}});
+        auto note = anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + word + "\""}});
         if (note.empty()) {
             auto pair = get_word_info(word);
             auto card = std::make_unique<Card>();
@@ -72,24 +72,12 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
     if (!ids.empty()) {
         anki->request("addTags", {{"notes", ids}, {"tags", "kindle"}});
     }
-    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "tag:vb_beta"}})}})) {
-        const auto front = note.at("fields").at("Front").at("value").get<std::string>();
-        for (auto &card : cards) {
-            if (card->get_front() == front) {
-                bool changed = false;
-                card->set_note_id(note.at("noteId").get<uint64_t>());
-                card->set_back(tools::clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
-                card->set_pos(string_essentials::split<std::set>(tools::clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
-                card->set_forms(tools::clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
-                if (changed) {
-                    anki_update_card(*card);
-                }
-                break;
-            }
-        }
+    if (cards.empty()) {
+        throw std::runtime_error("All cards done! No cards left for adding");
     }
-    const auto middle = std::stable_partition(cards.begin(), cards.end(), [](const auto &card) { return !!card->get_note_id(); });
-    current_card_idx = std::distance(cards.begin(), middle);
+    const auto skipped = Config::get_state<std::unordered_set<std::string>>("skipped_list");
+    const auto middle = std::stable_partition(cards.begin(), cards.end(), [&skipped](const auto &card) { return skipped.find(card->get_front()) != skipped.end(); });
+    current_card_idx = middle == cards.end() ? cards.size() - 1 : std::distance(cards.begin(), middle);
     std::stable_partition(middle, cards.end(), [](const auto &card) { return !card->get_levels().empty(); });
 }
 
@@ -203,7 +191,6 @@ void CardModel::anki_add_card(Card &card) const
 {
     if (!anki_find_card(card)) {
         auto tags = card.get_tags();
-        tags.insert("vb_beta");
         auto note = anki->request("addNotes", {{"notes", {{
             {"deckName", Config::get<std::string>("deck")},
             {"modelName", Config::get<std::string>("card_model")},

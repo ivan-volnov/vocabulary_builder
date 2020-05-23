@@ -2,6 +2,7 @@
 #define APP_H
 
 #include <tiled_ncurses/tiled_ncurses.hpp>
+#include <unordered_set>
 
 
 class CardModel;
@@ -28,6 +29,8 @@ public:
     void paint() const override;
     uint8_t process_key(char32_t ch, bool is_symbol) override;
 
+    void save_state();
+
 private:
     void print(const std::string &str) const;
     void current_card_idx_changed(size_t prev_card_idx);
@@ -38,6 +41,7 @@ private:
     std::shared_ptr<CardModel> model;
     std::string txt;
     size_t current_card_idx;
+    std::unordered_set<std::string> skipped_list;
 };
 
 
