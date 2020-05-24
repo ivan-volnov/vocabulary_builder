@@ -68,9 +68,7 @@ std::string Config::get_vocabulary_profile_filepath() const
 
 std::string Config::get_kindle_db_filepath() const
 {
-    // TODO: use real path to kindle's db file
-//    return ("/Volumes/Kindle/system/vocabulary/vocab.db");
-    return get_app_path().append("vocab.db");
+    return "/Volumes/Kindle/system/vocabulary/vocab.db";
 }
 
 std::string Config::get_config_filepath() const
