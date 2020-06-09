@@ -13,7 +13,7 @@ void run(int argc, char *argv[])
     Config::instance().set_sound_enabled(cmdl[{"s", "sound"}]);
 
     if (cmdl[{"h", "help"}]) {
-        std::cout << "Usage: " << argv[0] << " [options]\n\n"
+        std::cout << "Usage: " << std::filesystem::path(argv[0]).filename().string() << " [options]\n\n"
                      "Optional arguments:\n"
                      "-h --help               show this help message and exit\n"
                      "-k --kindle             import cards from kindle\n"
@@ -21,7 +21,7 @@ void run(int argc, char *argv[])
                      "-s --sound              read aloud current card\n"
                      "--suspended             work with suspended cards\n"
                      "--check_collection      check whole collection\n"
-                     "--fix_collection        fix whole collection\n"
+                     "--fix_collection        fix whole collection"
                   << std::endl;
         return;
     }
@@ -97,15 +97,16 @@ void run(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+#ifndef NDEBUG
     if (tools::am_I_being_debugged()) {
         run(argc, argv);
+        return 0;
     }
-    else {
-        try {
-            run(argc, argv);
-        }
-        catch (const std::exception &e) {
-            std::cerr << "Error: " << e.what() << std::endl;
-        }
+#endif
+    try {
+        run(argc, argv);
+    }
+    catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
     }
 }
