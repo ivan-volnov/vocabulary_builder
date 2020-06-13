@@ -21,8 +21,8 @@ void run(int argc, char *argv[])
                      "-s --sound              read aloud current card\n"
                      "--suspended             work with suspended cards\n"
                      "--check_collection      check whole collection\n"
-                     "--fix_collection        fix whole collection"
-                  << std::endl;
+                     "--fix_collection        fix whole collection\n"
+                  << std::flush;
         return;
     }
 
