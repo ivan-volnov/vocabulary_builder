@@ -10,21 +10,27 @@
 void run(int argc, char *argv[])
 {
     argh::parser cmdl(argc, argv, argh::parser::SINGLE_DASH_IS_MULTIFLAG);
-    Config::instance().set_sound_enabled(cmdl[{"s", "sound"}]);
-
-    if (cmdl[{"h", "help"}]) {
-        std::cout << "Usage: " << std::filesystem::path(argv[0]).filename().string() << " [options]\n\n"
-                     "Optional arguments:\n"
-                     "-h --help               show this help message and exit\n"
-                     "-k --kindle             import cards from kindle\n"
-                     "-l --leech              work with leech cards\n"
-                     "-s --sound              read aloud current card\n"
-                     "--suspended             work with suspended cards\n"
-                     "--check_collection      check whole collection\n"
-                     "--fix_collection        fix whole collection\n"
-                  << std::flush;
-        return;
+    {
+        auto flags = cmdl.flags();
+        for (const char *flag : {"k", "kindle", "l", "leech", "s", "sound", "suspended", "check_collection", "fix_collection"}) {
+            flags.erase(flag);
+        }
+        if (!flags.empty() || !cmdl.params().empty() || cmdl.pos_args().size() > 1) {
+            std::cout << "Usage: " << std::filesystem::path(argv[0]).filename().string() << " [options]\n\n"
+                         "Optional arguments:\n"
+                         "-h --help               show this help message and exit\n"
+                         "-k --kindle             import cards from kindle\n"
+                         "-l --leech              work with leech cards\n"
+                         "-s --sound              read aloud current card\n"
+                         "--suspended             work with suspended cards\n"
+                         "--check_collection      check whole collection\n"
+                         "--fix_collection        fix whole collection\n"
+                      << std::flush;
+            return;
+        }
     }
+
+    Config::instance().set_sound_enabled(cmdl[{"s", "sound"}]);
 
     auto model = std::make_shared<CardModel>();
 
