@@ -15,13 +15,18 @@ void run(int argc, char *argv[])
         for (const char *flag : {"k", "kindle", "l", "leech", "s", "sound", "suspended", "check_collection", "fix_collection"}) {
             flags.erase(flag);
         }
-        if (!flags.empty() || !cmdl.params().empty() || cmdl.pos_args().size() > 1) {
+        auto params = cmdl.params();
+        for (const char *param : {"query"}) {
+            params.erase(param);
+        }
+        if (!flags.empty() || !params.empty() || cmdl.pos_args().size() > 1) {
             std::cout << "Usage: " << std::filesystem::path(argv[0]).filename().string() << " [options]\n\n"
                          "Optional arguments:\n"
                          "-h --help               show this help message and exit\n"
                          "-k --kindle             import cards from kindle\n"
                          "-l --leech              work with leech cards\n"
                          "-s --sound              read aloud current card\n"
+                         "--query={name}          query vocabulary profile\n"
                          "--suspended             work with suspended cards\n"
                          "--check_collection      check whole collection\n"
                          "--fix_collection        fix whole collection\n"
@@ -40,6 +45,10 @@ void run(int argc, char *argv[])
     }
     if (cmdl["fix_collection"]) {
         model->anki_fix_collection(true);
+        return;
+    }
+    if (auto query = cmdl("query").str(); !query.empty()) {
+        model->query_vocabulary_profile(query);
         return;
     }
 

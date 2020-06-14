@@ -129,6 +129,23 @@ string_set_pair CardModel::get_word_info(const std::string &word) const
     return pair;
 }
 
+void CardModel::query_vocabulary_profile(const std::string &query) const
+{
+    auto sql = vocabulary_profile_db->create_query();
+    sql << "SELECT base, level, pos, gw\n"
+           "FROM words\n"
+           "WHERE base LIKE ?\n"
+           "ORDER BY base, level, pos";
+    sql.bind("%" + query + "%");
+    while (sql.step()) {
+        std::cout << std::left << std::setw(41) << sql.get_string()
+                  << std::left << std::setw(4) << sql.get_string()
+                  << std::left << std::setw(10) << sql.get_string()
+                  << std::left << std::setw(16) << sql.get_string()
+                  << std::endl;
+    }
+}
+
 Card &CardModel::get_card(size_t idx)
 {
     return *cards.at(idx);

@@ -26,6 +26,7 @@ public:
     void insert_new_card(const std::string &word, size_t idx);
 
     string_set_pair get_word_info(const std::string &word) const;
+    void query_vocabulary_profile(const std::string &query) const;
 
     Card &get_card(size_t idx);
     const Card &get_card(size_t idx) const;
