@@ -23,7 +23,7 @@ public:
     void load_suspended_cards();
     void load_leech_cards();
 
-    void insert_new_card(const std::string &word, size_t idx);
+    void insert_new_card(std::string word, size_t idx);
 
     string_set_pair get_word_info(const std::string &word) const;
     void query_vocabulary_profile(const std::string &query) const;
