@@ -117,6 +117,7 @@ size_t CardModel::insert_new_card(std::string word, size_t idx)
         card->set_front(std::move(word));
         card->set_levels(std::move(pair.first));
         card->set_pos(std::move(pair.second));
+        anki_reload_card(*card);
         it = cards.insert(cards.begin() + idx, std::move(card));
     }
     return it - cards.begin();
