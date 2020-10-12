@@ -106,17 +106,20 @@ void CardModel::load_leech_cards()
     }
 }
 
-void CardModel::insert_new_card(std::string word, size_t idx)
+size_t CardModel::insert_new_card(std::string word, size_t idx)
 {
     word = tools::clear_string(word);
     std::transform(word.begin(), word.end(), word.begin(), [](uint8_t c) { return std::tolower(c); });
-    auto pair = get_word_info(word);
-    auto card = std::make_unique<Card>();
-    card->set_front(std::move(word));
-    card->set_levels(std::move(pair.first));
-    card->set_pos(std::move(pair.second));
-    anki_reload_card(*card);
-    cards.insert(cards.begin() + idx, std::move(card));
+    auto it = std::find_if(cards.begin(), cards.end(), [&word](auto &card) { return card->get_front() == word; });
+    if (it == cards.end()) {
+        auto pair = get_word_info(word);
+        auto card = std::make_unique<Card>();
+        card->set_front(std::move(word));
+        card->set_levels(std::move(pair.first));
+        card->set_pos(std::move(pair.second));
+        it = cards.insert(cards.begin() + idx, std::move(card));
+    }
+    return it - cards.begin();
 }
 
 string_set_pair CardModel::get_word_info(const std::string &word) const

@@ -42,8 +42,14 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
             auto line = border->create<InputLine>("New word: ");
             line->run_modal();
             if (!line->is_cancelled()) {
-                model->insert_new_card(line->get_text(), current_card_idx);
-                current_card_idx_changed(current_card_idx + 1);
+                auto index = model->insert_new_card(line->get_text(), current_card_idx);
+                if (index == current_card_idx) {
+                    current_card_idx_changed(current_card_idx + 1);
+                }
+                else {
+                    std::swap(index, current_card_idx);
+                    current_card_idx_changed(index);
+                }
             }
             border->close();
             screen->show_cursor(false);
