@@ -7,3 +7,6 @@
 [submodule "libs/tiled_ncurses"]
 	path = libs/tiled_ncurses
 	url = https://github.com/ivan-volnov/tiled_ncurses.git
+[submodule "libs/libst"]
+	path = libs/libst
+	url = git@github.com:ivan-volnov/libst.git
