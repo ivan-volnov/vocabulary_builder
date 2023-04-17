@@ -5,7 +5,7 @@
 
 namespace AppleScript {
 
-bool run_apple_script(const std::string& script);
+bool run_apple_script(const std::string &script);
 
 } // namespace AppleScript
 

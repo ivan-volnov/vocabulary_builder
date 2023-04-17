@@ -4,8 +4,8 @@
 #include <ncurses.h>
 
 MainWindow::MainWindow(
-    std::shared_ptr<Screen> screen, std::weak_ptr<ProgressBar> progressbar_ptr, std::shared_ptr<CardModel> model_,
-    size_t current_card_idx) :
+    std::shared_ptr<Screen> screen, std::weak_ptr<ProgressBar> progressbar_ptr,
+    std::shared_ptr<CardModel> model_, size_t current_card_idx) :
     screen_ptr(screen),
     progressbar_ptr(progressbar_ptr),
     model(std::move(model_)),
@@ -125,9 +125,12 @@ void Footer::paint() const
     wclear(win);
     //    whline(win, '_', get_width());
     //    wmove(win, 1, 0);
-    for (const std::string str : {"[A]Add", "[I]Insert", "[E]Edit", "[J]Next", "[K]Back", "[R]Reload"}) {
+    for (const std::string str :
+         {"[A]Add", "[I]Insert", "[E]Edit", "[J]Next", "[K]Back", "[R]Reload"}) {
         //        wattron(win, A_STANDOUT );
-        waddnstr(win, str.c_str(), std::min(str.size(), static_cast<size_t>(get_width() - getcurx(win))));
+        waddnstr(
+            win, str.c_str(),
+            std::min(str.size(), static_cast<size_t>(get_width() - getcurx(win))));
         //        wattroff(win, A_STANDOUT);
         waddch(win, ' ');
         waddch(win, ' ');

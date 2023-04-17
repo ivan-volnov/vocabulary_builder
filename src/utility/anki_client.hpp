@@ -9,7 +9,8 @@ class AnkiClient
 public:
     AnkiClient();
 
-    nlohmann::json request(const std::string &action, const nlohmann::json &params = nullptr);
+    nlohmann::json request(
+        const std::string &action, const nlohmann::json &params = nullptr);
 
 private:
     CurlSession session;

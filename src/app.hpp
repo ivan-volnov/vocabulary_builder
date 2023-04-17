@@ -20,8 +20,8 @@ class MainWindow : public CursesWindow
 {
 public:
     MainWindow(
-        std::shared_ptr<Screen> screen, std::weak_ptr<ProgressBar> progressbar_ptr, std::shared_ptr<CardModel> model_,
-        size_t current_card_idx);
+        std::shared_ptr<Screen> screen, std::weak_ptr<ProgressBar> progressbar_ptr,
+        std::shared_ptr<CardModel> model_, size_t current_card_idx);
 
 public:
     void paint() const override;

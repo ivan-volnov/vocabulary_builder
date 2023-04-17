@@ -29,8 +29,8 @@ void SpeechEngine::say(const std::string &text)
 void SpeechEngine::say(const std::string &text, SpeechChannel chan)
 {
     auto cs = CFStringCreateWithBytes(
-        kCFAllocatorDefault, reinterpret_cast<const UInt8 *>(text.data()), text.size() * sizeof(char),
-        kCFStringEncodingUTF8, false);
+        kCFAllocatorDefault, reinterpret_cast<const UInt8 *>(text.data()),
+        text.size() * sizeof(char), kCFStringEncodingUTF8, false);
     SpeakCFString(chan, cs, nullptr);
     CFRelease(cs);
 }
@@ -51,7 +51,9 @@ SpeechChannel SpeechEngine::create_channel(const std::string &voice)
         if (GetVoiceDescription(&spec, &descr, sizeof(VoiceDescription)) != noErr) {
             continue;
         }
-        if (voice.compare(0, voice.size(), reinterpret_cast<const char *>(descr.name + 1), *descr.name) == 0) {
+        if (voice.compare(
+                0, voice.size(), reinterpret_cast<const char *>(descr.name + 1),
+                *descr.name) == 0) {
             return NewSpeechChannel(&spec, &chan) == noErr ? chan : nullptr;
         }
     }

@@ -22,7 +22,7 @@ BreakBeforeBraces: Custom
 BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterComma
-ColumnLimit: 120
+ColumnLimit: 90
 Cpp11BracedListStyle: true
 EmptyLineBeforeAccessModifier: Always
 FixNamespaceComments: true

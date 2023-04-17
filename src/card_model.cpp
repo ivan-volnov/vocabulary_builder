@@ -15,7 +15,8 @@
 
 CardModel::CardModel()
 {
-    vocabulary_profile_db = SqliteDatabase::open_read_only(Config::instance().get_vocabulary_profile_filepath());
+    vocabulary_profile_db = SqliteDatabase::open_read_only(
+        Config::instance().get_vocabulary_profile_filepath());
     if (Config::instance().is_sound_enabled()) {
         speech = std::make_shared<SpeechEngine>("Daniel");
     }
@@ -62,7 +63,9 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
         auto note = anki->request(
             "findNotes",
             {
-                {"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + word + "\""}
+                {"query",
+                 "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + word +
+                 "\""}
         });
         if (note.empty()) {
             auto pair = get_word_info(word);
@@ -86,12 +89,17 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
     if (cards.empty()) {
         throw std::runtime_error("All cards done! No cards left for adding");
     }
-    const auto skipped = Config::get_state<std::unordered_set<std::string>>("skipped_list");
-    const auto middle = std::stable_partition(cards.begin(), cards.end(), [&skipped](const auto &card) {
-        return skipped.find(card->get_front()) != skipped.end();
+    const auto skipped =
+        Config::get_state<std::unordered_set<std::string>>("skipped_list");
+    const auto middle =
+        std::stable_partition(cards.begin(), cards.end(), [&skipped](const auto &card) {
+            return skipped.find(card->get_front()) != skipped.end();
+        });
+    current_card_idx =
+        middle == cards.end() ? cards.size() - 1 : std::distance(cards.begin(), middle);
+    std::stable_partition(middle, cards.end(), [](const auto &card) {
+        return !card->get_levels().empty();
     });
-    current_card_idx = middle == cards.end() ? cards.size() - 1 : std::distance(cards.begin(), middle);
-    std::stable_partition(middle, cards.end(), [](const auto &card) { return !card->get_levels().empty(); });
 }
 
 void CardModel::close_kindle_db()
@@ -104,7 +112,9 @@ void CardModel::load_suspended_cards()
     for (const auto &note_id : anki->request(
              "findNotes",
              {
-                 {"query", "\"deck:" + Config::get<std::string>("deck") + "\" is:suspended -tag:leech"}
+                 {"query",
+                  "\"deck:" + Config::get<std::string>("deck") +
+                  "\" is:suspended -tag:leech"}
     })) {
         auto card = std::make_unique<Card>();
         card->set_note_id(note_id.get<uint64_t>());
@@ -118,7 +128,8 @@ void CardModel::load_leech_cards()
     for (const auto &note_id : anki->request(
              "findNotes",
              {
-                 {"query", "\"deck:" + Config::get<std::string>("deck") + "\" tag:leech"}
+                 {"query",
+                  "\"deck:" + Config::get<std::string>("deck") + "\" tag:leech"}
     })) {
         auto card = std::make_unique<Card>();
         card->set_note_id(note_id.get<uint64_t>());
@@ -130,8 +141,12 @@ void CardModel::load_leech_cards()
 size_t CardModel::insert_new_card(std::string word, size_t idx)
 {
     word = tools::clear_string(word);
-    std::transform(word.begin(), word.end(), word.begin(), [](uint8_t c) { return std::tolower(c); });
-    auto it = std::find_if(cards.begin(), cards.end(), [&word](auto &card) { return card->get_front() == word; });
+    std::transform(word.begin(), word.end(), word.begin(), [](uint8_t c) {
+        return std::tolower(c);
+    });
+    auto it = std::find_if(cards.begin(), cards.end(), [&word](auto &card) {
+        return card->get_front() == word;
+    });
     if (it == cards.end()) {
         auto pair = get_word_info(word);
         auto card = std::make_unique<Card>();
@@ -166,8 +181,9 @@ void CardModel::query_vocabulary_profile(const std::string &query) const
            "ORDER BY base, level, pos";
     sql.bind("%" + query + "%");
     while (sql.step()) {
-        std::cout << std::left << std::setw(41) << sql.get_string() << std::left << std::setw(4) << sql.get_string()
-                  << std::left << std::setw(10) << sql.get_string() << std::left << std::setw(16) << sql.get_string()
+        std::cout << std::left << std::setw(41) << sql.get_string() << std::left
+                  << std::setw(4) << sql.get_string() << std::left << std::setw(10)
+                  << sql.get_string() << std::left << std::setw(16) << sql.get_string()
                   << std::endl;
     }
 }
@@ -192,11 +208,14 @@ void CardModel::look_up_in_safari(const std::string &word)
     if (word != last_safari_word) {
 #ifdef __APPLE__
         std::ostringstream ss;
-        ss << "set myURL to \"https://dictionary.cambridge.org/search/direct/?datasetsearch="
-           << Config::get<std::string>("cambridge_dictionary") << "&q=" << string_essentials::url_encode(word)
+        ss << "set myURL to "
+              "\"https://dictionary.cambridge.org/search/direct/?datasetsearch="
+           << Config::get<std::string>("cambridge_dictionary")
+           << "&q=" << string_essentials::url_encode(word)
            << "\"\n"
               "tell application \"Safari\"\n"
-              "    if the URL of the front document starts with \"https://dictionary.cambridge.org\" then\n"
+              "    if the URL of the front document starts with "
+              "\"https://dictionary.cambridge.org\" then\n"
               "        set the URL of the front document to myURL\n"
               "    else\n"
               "        open location myURL\n"
@@ -218,7 +237,8 @@ void CardModel::say(const std::string &word) const
     txt = std::regex_replace(txt, std::regex("\\bsb\\b"), "somebody");
     txt = std::regex_replace(txt, std::regex("\\bsth\\b"), "something");
     txt = std::regex_replace(txt, std::regex("\\bswh\\b"), "somewhere");
-    if (txt != "or" && txt != "believe it or not" && txt != "or so" && txt != "more or less") {
+    if (txt != "or" && txt != "believe it or not" && txt != "or so" &&
+        txt != "more or less") {
         txt = std::regex_replace(txt, std::regex("\\bor\\b"), ",");
     }
     string_essentials::erase(txt, "(");
@@ -240,7 +260,8 @@ void CardModel::anki_add_card(Card &card) const
                  {{
                  {"deckName", Config::get<std::string>("deck")},
                  {"modelName", Config::get<std::string>("card_model")},
-                 {"fields", {{"Front", card.get_front()}, {"PoS", card.get_pos_string()}}},
+                 {"fields",
+                 {{"Front", card.get_front()}, {"PoS", card.get_pos_string()}}},
                  {"tags", tags},
                  }}}
         });
@@ -254,7 +275,9 @@ void CardModel::anki_open_browser(const Card &card) const
     anki->request(
         "guiBrowse",
         {
-            {"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + card.get_front() + "\""}
+            {"query",
+             "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" +
+             card.get_front() + "\""}
     });
 }
 
@@ -275,11 +298,16 @@ void CardModel::anki_reload_card(Card &card) const
             continue;
         }
         bool changed = false;
-        card.set_front(tools::clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed));
-        card.set_back(tools::clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
+        card.set_front(tools::clear_string(
+            note.at("fields").at("Front").at("value").get<std::string>(), changed));
+        card.set_back(tools::clear_string(
+            note.at("fields").at("Back").at("value").get<std::string>(), changed));
         card.set_pos(string_essentials::split<std::set>(
-            tools::clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
-        card.set_forms(tools::clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
+            tools::clear_string(
+                note.at("fields").at("PoS").at("value").get<std::string>(), changed),
+            ", "));
+        card.set_forms(tools::clear_string(
+            note.at("fields").at("Forms").at("value").get<std::string>(), changed));
         if (changed) {
             anki_update_card(card);
         }
@@ -309,7 +337,9 @@ bool CardModel::anki_find_card(Card &card) const
     auto notes = anki->request(
         "findNotes",
         {
-            {"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + card.get_front() + "\""}
+            {"query",
+             "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" +
+             card.get_front() + "\""}
     });
     if (notes.empty()) {
         card.set_note_id(0);
@@ -325,9 +355,12 @@ void CardModel::anki_fix_collection(bool commit) const
              "notesInfo",
              {
                  {"notes",
-                  anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\""}})}
+                  anki->request(
+                  "findNotes", {{"query",
+ "\"deck:" + Config::get<std::string>("deck") + "\""}})}
     })) {
-        const auto front_old = note.at("fields").at("Front").at("value").get<std::string>();
+        const auto front_old =
+            note.at("fields").at("Front").at("value").get<std::string>();
         const auto back_old = note.at("fields").at("Back").at("value").get<std::string>();
         const auto pos_old = note.at("fields").at("PoS").at("value").get<std::string>();
         const auto note_id = note.at("noteId").get<uint64_t>();
@@ -367,8 +400,8 @@ void CardModel::anki_fix_collection(bool commit) const
                 });
             }
         }
-        const auto pos =
-            string_essentials::join(string_essentials::split<std::set>(tools::clear_string(pos_old), ", "), ", ");
+        const auto pos = string_essentials::join(
+            string_essentials::split<std::set>(tools::clear_string(pos_old), ", "), ", ");
         if (pos != pos_old) {
             std::cout << "Fix pos: " << pos_old << " to: " << pos << std::endl;
             if (commit) {
