@@ -1,9 +1,8 @@
-#ifndef ANKICLIENT_H
-#define ANKICLIENT_H
+#ifndef ANKI_CLIENT_HPP
+#define ANKI_CLIENT_HPP
 
-#include "curl_request.h"
+#include "curl_request.hpp"
 #include <libs/json.hpp>
-
 
 class AnkiClient
 {
@@ -16,4 +15,4 @@ private:
     CurlSession session;
 };
 
-#endif // ANKICLIENT_H
+#endif // ANKI_CLIENT_HPP

@@ -1,6 +1,6 @@
-#include "app.h"
-#include "card_model.h"
-#include "config.h"
+#include "app.hpp"
+#include "card_model.hpp"
+#include "config.hpp"
 #include <st/logger.hpp>
 
 inline constexpr auto APP_HELP =

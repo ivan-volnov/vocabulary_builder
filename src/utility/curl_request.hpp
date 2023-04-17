@@ -1,5 +1,5 @@
-#ifndef CURL_REQUEST_H
-#define CURL_REQUEST_H
+#ifndef CURL_REQUEST_HPP
+#define CURL_REQUEST_HPP
 
 #include <string>
 
@@ -31,4 +31,4 @@ private:
     struct curl_slist *headers = nullptr;
 };
 
-#endif // CURL_REQUEST_H
+#endif // CURL_REQUEST_HPP

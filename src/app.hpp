@@ -1,5 +1,5 @@
-#ifndef APP_H
-#define APP_H
+#ifndef APP_HPP
+#define APP_HPP
 
 #include <tiled_ncurses/tiled_ncurses.hpp>
 #include <unordered_set>
@@ -7,23 +7,21 @@
 
 class CardModel;
 
-
-
 namespace ColorScheme {
 
 constexpr auto Window = "window";
-constexpr auto Error  = "error";
-constexpr auto Gray   = "gray";
-constexpr auto Blue   = "blue";
+constexpr auto Error = "error";
+constexpr auto Gray = "gray";
+constexpr auto Blue = "blue";
 
-}
-
-
+} // namespace ColorScheme
 
 class MainWindow : public CursesWindow
 {
 public:
-    MainWindow(std::shared_ptr<Screen> screen, std::weak_ptr<ProgressBar> progressbar_ptr, std::shared_ptr<CardModel> model_, size_t current_card_idx);
+    MainWindow(
+        std::shared_ptr<Screen> screen, std::weak_ptr<ProgressBar> progressbar_ptr, std::shared_ptr<CardModel> model_,
+        size_t current_card_idx);
 
 public:
     void paint() const override;
@@ -44,8 +42,6 @@ private:
     std::unordered_set<std::string> skipped_list;
 };
 
-
-
 class Footer : public CursesWindow
 {
 public:
@@ -54,4 +50,4 @@ public:
     void paint() const override;
 };
 
-#endif // APP_H
+#endif // APP_HPP

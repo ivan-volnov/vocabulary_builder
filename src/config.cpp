@@ -1,12 +1,12 @@
-#include "config.h"
-#include <unistd.h>
-#include <pwd.h>
+#include "config.hpp"
 #include <fstream>
 #include <iostream>
-
+#include <pwd.h>
+#include <unistd.h>
 
 Config::Config() :
-    json({}), json_state({})
+    json({}),
+    json_state({})
 {
     const char *homedir = getenv("HOME");
     if (homedir == nullptr) {

@@ -1,5 +1,5 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
 
 
 #include <filesystem>
@@ -13,7 +13,6 @@ public:
     Config &operator=(const Config &) = delete;
 
     static Config &instance();
-
 
     template<typename T>
     static T get(const std::string &key)
@@ -47,7 +46,6 @@ public:
         instance().json[key][inner_key] = std::forward<T>(value);
     }
 
-
     template<typename T>
     static T get_state(const std::string &key)
     {
@@ -80,7 +78,6 @@ public:
         instance().json_state[key][inner_key] = std::forward<T>(value);
     }
 
-
     std::filesystem::path get_app_path() const;
 
     std::string get_vocabulary_profile_filepath() const;
@@ -99,4 +96,4 @@ private:
     nlohmann::json json_state;
 };
 
-#endif // CONFIG_H
+#endif // CONFIG_HPP

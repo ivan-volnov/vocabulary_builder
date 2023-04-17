@@ -1,20 +1,19 @@
-#include "speech_engine.h"
+#include "speech_engine.hpp"
 #include <ApplicationServices/ApplicationServices.h>
-
 
 SpeechEngine::SpeechEngine(const std::string &voice) :
     channel(create_channel(voice))
 {
-//    if (channel != nullptr) {
-//        auto callback_ptr = &speech_done_callback;
-//        auto cbf = CFNumberCreate(nullptr, kCFNumberLongType, &callback_ptr);
-//        SetSpeechProperty(channel, kSpeechSpeechDoneCallBack, cbf);
-//        CFRelease(cbf);
-//        SpeechEngine *this_ptr = this;
-//        cbf = CFNumberCreate(nullptr, kCFNumberLongType, &this_ptr);
-//        SetSpeechProperty(channel, kSpeechRefConProperty, cbf);
-//        CFRelease(cbf);
-//    }
+    //    if (channel != nullptr) {
+    //        auto callback_ptr = &speech_done_callback;
+    //        auto cbf = CFNumberCreate(nullptr, kCFNumberLongType, &callback_ptr);
+    //        SetSpeechProperty(channel, kSpeechSpeechDoneCallBack, cbf);
+    //        CFRelease(cbf);
+    //        SpeechEngine *this_ptr = this;
+    //        cbf = CFNumberCreate(nullptr, kCFNumberLongType, &this_ptr);
+    //        SetSpeechProperty(channel, kSpeechRefConProperty, cbf);
+    //        CFRelease(cbf);
+    //    }
 }
 
 SpeechEngine::~SpeechEngine()
@@ -29,7 +28,9 @@ void SpeechEngine::say(const std::string &text)
 
 void SpeechEngine::say(const std::string &text, SpeechChannel chan)
 {
-    auto cs = CFStringCreateWithBytes(kCFAllocatorDefault, reinterpret_cast<const UInt8 *>(text.data()), text.size() * sizeof(char), kCFStringEncodingUTF8, false);
+    auto cs = CFStringCreateWithBytes(
+        kCFAllocatorDefault, reinterpret_cast<const UInt8 *>(text.data()), text.size() * sizeof(char),
+        kCFStringEncodingUTF8, false);
     SpeakCFString(chan, cs, nullptr);
     CFRelease(cs);
 }
@@ -57,7 +58,7 @@ SpeechChannel SpeechEngine::create_channel(const std::string &voice)
     return NewSpeechChannel(nullptr, &chan) == noErr ? chan : nullptr;
 }
 
-//void SpeechEngine::speech_done_callback(SpeechChannel, void *ptr)
+// void SpeechEngine::speech_done_callback(SpeechChannel, void *ptr)
 //{
-//    auto self = reinterpret_cast<SpeechEngine *>(ptr);
-//}
+//     auto self = reinterpret_cast<SpeechEngine *>(ptr);
+// }

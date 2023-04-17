@@ -1,13 +1,13 @@
-#include "card_model.h"
-#include <unordered_set>
+#include "card_model.hpp"
+#include "config.hpp"
+#include "sqlite_database/sqlite_database.h"
+#include "utility/anki_client.hpp"
+#include "utility/speech_engine.hpp"
+#include "utility/tools.hpp"
 #include <iostream>
 #include <regex>
 #include <string_essentials/string_essentials.hpp>
-#include "sqlite_database/sqlite_database.h"
-#include "utility/anki_client.h"
-#include "utility/speech_engine.h"
-#include "utility/tools.h"
-#include "config.h"
+#include <unordered_set>
 
 #ifdef __APPLE__
 #include "utility/apple_script.h"
@@ -59,7 +59,11 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
     std::unordered_set<uint64_t> ids;
     while (sql.step()) {
         auto word = sql.get_string();
-        auto note = anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + word + "\""}});
+        auto note = anki->request(
+            "findNotes",
+            {
+                {"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + word + "\""}
+        });
         if (note.empty()) {
             auto pair = get_word_info(word);
             auto card = std::make_unique<Card>();
@@ -72,13 +76,20 @@ void CardModel::load_from_kindle(const std::string &book, size_t &current_card_i
         ids.insert(note.begin(), note.end());
     }
     if (!ids.empty()) {
-        anki->request("addTags", {{"notes", ids}, {"tags", "kindle"}});
+        anki->request(
+            "addTags",
+            {
+                {"notes",      ids},
+                { "tags", "kindle"}
+        });
     }
     if (cards.empty()) {
         throw std::runtime_error("All cards done! No cards left for adding");
     }
     const auto skipped = Config::get_state<std::unordered_set<std::string>>("skipped_list");
-    const auto middle = std::stable_partition(cards.begin(), cards.end(), [&skipped](const auto &card) { return skipped.find(card->get_front()) != skipped.end(); });
+    const auto middle = std::stable_partition(cards.begin(), cards.end(), [&skipped](const auto &card) {
+        return skipped.find(card->get_front()) != skipped.end();
+    });
     current_card_idx = middle == cards.end() ? cards.size() - 1 : std::distance(cards.begin(), middle);
     std::stable_partition(middle, cards.end(), [](const auto &card) { return !card->get_levels().empty(); });
 }
@@ -90,7 +101,11 @@ void CardModel::close_kindle_db()
 
 void CardModel::load_suspended_cards()
 {
-    for (const auto &note_id : anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" is:suspended -tag:leech"}})) {
+    for (const auto &note_id : anki->request(
+             "findNotes",
+             {
+                 {"query", "\"deck:" + Config::get<std::string>("deck") + "\" is:suspended -tag:leech"}
+    })) {
         auto card = std::make_unique<Card>();
         card->set_note_id(note_id.get<uint64_t>());
         anki_reload_card(*card);
@@ -100,7 +115,11 @@ void CardModel::load_suspended_cards()
 
 void CardModel::load_leech_cards()
 {
-    for (const auto &note_id : anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" tag:leech"}})) {
+    for (const auto &note_id : anki->request(
+             "findNotes",
+             {
+                 {"query", "\"deck:" + Config::get<std::string>("deck") + "\" tag:leech"}
+    })) {
         auto card = std::make_unique<Card>();
         card->set_note_id(note_id.get<uint64_t>());
         anki_reload_card(*card);
@@ -147,10 +166,8 @@ void CardModel::query_vocabulary_profile(const std::string &query) const
            "ORDER BY base, level, pos";
     sql.bind("%" + query + "%");
     while (sql.step()) {
-        std::cout << std::left << std::setw(41) << sql.get_string()
-                  << std::left << std::setw(4) << sql.get_string()
-                  << std::left << std::setw(10) << sql.get_string()
-                  << std::left << std::setw(16) << sql.get_string()
+        std::cout << std::left << std::setw(41) << sql.get_string() << std::left << std::setw(4) << sql.get_string()
+                  << std::left << std::setw(10) << sql.get_string() << std::left << std::setw(16) << sql.get_string()
                   << std::endl;
     }
 }
@@ -176,7 +193,8 @@ void CardModel::look_up_in_safari(const std::string &word)
 #ifdef __APPLE__
         std::ostringstream ss;
         ss << "set myURL to \"https://dictionary.cambridge.org/search/direct/?datasetsearch="
-                    << Config::get<std::string>("cambridge_dictionary") << "&q=" << string_essentials::url_encode(word) << "\"\n"
+           << Config::get<std::string>("cambridge_dictionary") << "&q=" << string_essentials::url_encode(word)
+           << "\"\n"
               "tell application \"Safari\"\n"
               "    if the URL of the front document starts with \"https://dictionary.cambridge.org\" then\n"
               "        set the URL of the front document to myURL\n"
@@ -200,11 +218,7 @@ void CardModel::say(const std::string &word) const
     txt = std::regex_replace(txt, std::regex("\\bsb\\b"), "somebody");
     txt = std::regex_replace(txt, std::regex("\\bsth\\b"), "something");
     txt = std::regex_replace(txt, std::regex("\\bswh\\b"), "somewhere");
-    if (txt != "or" &&
-        txt != "believe it or not" &&
-        txt != "or so" &&
-        txt != "more or less")
-    {
+    if (txt != "or" && txt != "believe it or not" && txt != "or so" && txt != "more or less") {
         txt = std::regex_replace(txt, std::regex("\\bor\\b"), ",");
     }
     string_essentials::erase(txt, "(");
@@ -219,14 +233,17 @@ void CardModel::anki_add_card(Card &card) const
 {
     if (!anki_find_card(card)) {
         auto tags = card.get_tags();
-        auto note = anki->request("addNotes", {{"notes", {{
-            {"deckName", Config::get<std::string>("deck")},
-            {"modelName", Config::get<std::string>("card_model")},
-            {"fields", {
-                 {"Front", card.get_front()},
-                 {"PoS", card.get_pos_string()} }},
-            {"tags", tags},
-        }}}});
+        auto note = anki->request(
+            "addNotes",
+            {
+                {"notes",
+                 {{
+                 {"deckName", Config::get<std::string>("deck")},
+                 {"modelName", Config::get<std::string>("card_model")},
+                 {"fields", {{"Front", card.get_front()}, {"PoS", card.get_pos_string()}}},
+                 {"tags", tags},
+                 }}}
+        });
         card.set_note_id(note.at(0).get<uint64_t>());
     }
     anki_open_browser(card);
@@ -234,7 +251,11 @@ void CardModel::anki_add_card(Card &card) const
 
 void CardModel::anki_open_browser(const Card &card) const
 {
-    anki->request("guiBrowse", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + card.get_front() + "\""}});
+    anki->request(
+        "guiBrowse",
+        {
+            {"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + card.get_front() + "\""}
+    });
 }
 
 void CardModel::anki_reload_card(Card &card) const
@@ -243,7 +264,12 @@ void CardModel::anki_reload_card(Card &card) const
         if (!card.get_note_id()) {
             continue;
         }
-        auto note = anki->request("notesInfo", {{"notes", {card.get_note_id()}}}).at(0);
+        auto note = anki->request(
+                            "notesInfo",
+                            {
+                                {"notes", {card.get_note_id()}}
+        })
+                        .at(0);
         if (note.empty()) {
             card.set_note_id(0);
             continue;
@@ -251,7 +277,8 @@ void CardModel::anki_reload_card(Card &card) const
         bool changed = false;
         card.set_front(tools::clear_string(note.at("fields").at("Front").at("value").get<std::string>(), changed));
         card.set_back(tools::clear_string(note.at("fields").at("Back").at("value").get<std::string>(), changed));
-        card.set_pos(string_essentials::split<std::set>(tools::clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
+        card.set_pos(string_essentials::split<std::set>(
+            tools::clear_string(note.at("fields").at("PoS").at("value").get<std::string>(), changed), ", "));
         card.set_forms(tools::clear_string(note.at("fields").at("Forms").at("value").get<std::string>(), changed));
         if (changed) {
             anki_update_card(card);
@@ -262,19 +289,28 @@ void CardModel::anki_reload_card(Card &card) const
 
 void CardModel::anki_update_card(const Card &card) const
 {
-    anki->request("updateNoteFields", {{"note", {
-        {"id", card.get_note_id()},
-        {"fields", {
-             {"Front", card.get_front()},
+    anki->request(
+        "updateNoteFields",
+        {
+            {"note",
+             {
+             {"id", card.get_note_id()},
+             {"fields",
+             {{"Front", card.get_front()},
              {"Back", card.get_back()},
              {"Forms", card.get_forms()},
-             {"PoS", card.get_pos_string()} }},
-    }}});
+             {"PoS", card.get_pos_string()}}},
+             }}
+    });
 }
 
 bool CardModel::anki_find_card(Card &card) const
 {
-    auto notes = anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + card.get_front() + "\""}});
+    auto notes = anki->request(
+        "findNotes",
+        {
+            {"query", "\"deck:" + Config::get<std::string>("deck") + "\" front:\"" + card.get_front() + "\""}
+    });
     if (notes.empty()) {
         card.set_note_id(0);
         return false;
@@ -285,7 +321,12 @@ bool CardModel::anki_find_card(Card &card) const
 
 void CardModel::anki_fix_collection(bool commit) const
 {
-    for (const auto &note : anki->request("notesInfo", {{"notes", anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\""}})}})) {
+    for (const auto &note : anki->request(
+             "notesInfo",
+             {
+                 {"notes",
+                  anki->request("findNotes", {{"query", "\"deck:" + Config::get<std::string>("deck") + "\""}})}
+    })) {
         const auto front_old = note.at("fields").at("Front").at("value").get<std::string>();
         const auto back_old = note.at("fields").at("Back").at("value").get<std::string>();
         const auto pos_old = note.at("fields").at("PoS").at("value").get<std::string>();
@@ -294,36 +335,52 @@ void CardModel::anki_fix_collection(bool commit) const
         if (front != front_old) {
             std::cout << "Fix front: " << front_old << " to: " << front << std::endl;
             if (commit) {
-                anki->request("updateNoteFields", {{"note", {
-                    {"id", note_id},
-                    {"fields", {
+                anki->request(
+                    "updateNoteFields",
+                    {
+                        {"note",
+                         {
+                         {"id", note_id},
+                         {"fields",
+                         {
                          {"Front", front},
-                    }},
-                }}});
+                         }},
+                         }}
+                });
             }
         }
         const auto back = tools::clear_string(back_old);
         if (back != back_old) {
             std::cout << "Fix back: " << back_old << " to: " << back << std::endl;
             if (commit) {
-                anki->request("updateNoteFields", {{"note", {
-                    {"id", note_id},
-                    {"fields", {
+                anki->request(
+                    "updateNoteFields",
+                    {
+                        {"note",
+                         {
+                         {"id", note_id},
+                         {"fields",
+                         {
                          {"Back", back},
-                    }},
-                }}});
+                         }},
+                         }}
+                });
             }
         }
-        const auto pos = string_essentials::join(string_essentials::split<std::set>(tools::clear_string(pos_old), ", "), ", ");
+        const auto pos =
+            string_essentials::join(string_essentials::split<std::set>(tools::clear_string(pos_old), ", "), ", ");
         if (pos != pos_old) {
             std::cout << "Fix pos: " << pos_old << " to: " << pos << std::endl;
             if (commit) {
-                anki->request("updateNoteFields", {{"note", {
-                    {"id", note_id},
-                    {"fields", {
-                         {"PoS", pos}
-                    }},
-                }}});
+                anki->request(
+                    "updateNoteFields",
+                    {
+                        {"note",
+                         {
+                         {"id", note_id},
+                         {"fields", {{"PoS", pos}}},
+                         }}
+                });
             }
         }
     }

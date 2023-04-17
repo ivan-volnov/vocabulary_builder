@@ -1,14 +1,13 @@
-#ifndef CARDMODEL_H
-#define CARDMODEL_H
+#ifndef CARDMODEL_HPP
+#define CARDMODEL_HPP
 
+#include "card.hpp"
 #include <vector>
-#include "card.h"
 
 
 class SqliteDatabase;
 class SpeechEngine;
 class AnkiClient;
-
 
 class CardModel
 {
@@ -55,4 +54,4 @@ private:
 };
 
 
-#endif // CARDMODEL_H
+#endif // CARDMODEL_HPP

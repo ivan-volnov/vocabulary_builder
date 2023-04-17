@@ -38,22 +38,21 @@ endif()
 
 add_executable(${PROJECT_NAME}
     src/app.cpp
-    src/app.h
+    src/app.hpp
     src/card.cpp
-    src/card.h
+    src/card.hpp
     src/card_model.cpp
-    src/card_model.h
+    src/card_model.hpp
     src/config.cpp
-    src/config.h
-    src/global.h
+    src/config.hpp
     src/main.cpp
     src/utility/anki_client.cpp
-    src/utility/anki_client.h
+    src/utility/anki_client.hpp
     src/utility/curl_request.cpp
-    src/utility/curl_request.h
-    src/utility/speech_engine.h
+    src/utility/curl_request.hpp
+    src/utility/speech_engine.hpp
     src/utility/tools.cpp
-    src/utility/tools.h
+    src/utility/tools.hpp
     ${APPLE_SOURCES}
 )
 

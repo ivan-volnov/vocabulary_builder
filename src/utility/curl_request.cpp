@@ -1,6 +1,5 @@
-#include "curl_request.h"
+#include "curl_request.hpp"
 #include <curl/curl.h>
-
 
 CurlSession::CurlSession()
 {
@@ -77,9 +76,8 @@ std::string CurlSession::perform_request(const char *url)
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, read_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &result);
-    if (CURLcode res;
-            (res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers)) != CURLE_OK ||
-            (res = curl_easy_perform(curl)) != CURLE_OK) {
+    if (CURLcode res; (res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers)) != CURLE_OK ||
+        (res = curl_easy_perform(curl)) != CURLE_OK) {
         throw std::runtime_error(curl_easy_strerror(res));
     }
     return result;

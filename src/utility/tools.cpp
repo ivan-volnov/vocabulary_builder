@@ -1,14 +1,13 @@
-#include "tools.h"
+#include "tools.hpp"
+#include <cassert>
 #include <filesystem>
+#include <string_essentials/string_essentials.hpp>
 #include <sys/sysctl.h>
 #include <unistd.h>
-#include <string_essentials/string_essentials.hpp>
-#include <cassert>
 
 std::string tools::weekday_to_string(uint32_t day)
 {
-    switch (day)
-    {
+    switch (day) {
     case 0:
         return "Sunday";
     case 1:

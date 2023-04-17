@@ -1,5 +1,5 @@
-#ifndef TOOLS_H
-#define TOOLS_H
+#ifndef TOOLS_HPP
+#define TOOLS_HPP
 
 #include <string>
 
@@ -13,4 +13,4 @@ std::string clear_string(const std::string &string, bool &changed);
 } // namespace tools
 
 
-#endif // TOOLS_H
+#endif // TOOLS_HPP

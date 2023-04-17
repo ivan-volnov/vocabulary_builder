@@ -1,13 +1,12 @@
-#ifndef CARD_H
-#define CARD_H
+#ifndef CARD_HPP
+#define CARD_HPP
 
-#include <string>
 #include <set>
+#include <string>
 
 using string_set = std::set<std::string>;
 using string_set_pair = std::pair<string_set, string_set>;
 using string_set_tuple3 = std::tuple<string_set, string_set, string_set>;
-
 
 class Card
 {
@@ -75,4 +74,4 @@ private:
 };
 
 
-#endif // CARD_H
+#endif // CARD_HPP
