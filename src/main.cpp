@@ -108,16 +108,8 @@ void run(int argc, char *argv[])
     main_window->save_state();
 }
 
-
-
 int main(int argc, char *argv[])
 {
-#ifndef NDEBUG
-    if (tools::am_I_being_debugged()) {
-        run(argc, argv);
-        return 0;
-    }
-#endif
     try {
         run(argc, argv);
     }

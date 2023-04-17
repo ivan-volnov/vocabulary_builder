@@ -5,17 +5,19 @@
 #include <string_essentials/string_essentials.hpp>
 #include "sqlite_database/sqlite_database.h"
 #include "utility/anki_client.h"
-#include "utility/apple_script.h"
 #include "utility/speech_engine.h"
 #include "utility/tools.h"
 #include "config.h"
 
+#ifdef __APPLE__
+#include "utility/apple_script.h"
+#endif
 
 CardModel::CardModel()
 {
     vocabulary_profile_db = SqliteDatabase::open_read_only(Config::instance().get_vocabulary_profile_filepath());
     if (Config::instance().is_sound_enabled()) {
-        speech = std::make_shared<SpeechEngine>();
+        speech = std::make_shared<SpeechEngine>("Daniel");
     }
     anki = std::make_shared<AnkiClient>();
     if (anki->request("version").get<uint64_t>() < 6) {
@@ -171,6 +173,7 @@ size_t CardModel::size() const
 void CardModel::look_up_in_safari(const std::string &word)
 {
     if (word != last_safari_word) {
+#ifdef __APPLE__
         std::ostringstream ss;
         ss << "set myURL to \"https://dictionary.cambridge.org/search/direct/?datasetsearch="
                     << Config::get<std::string>("cambridge_dictionary") << "&q=" << string_essentials::url_encode(word) << "\"\n"
@@ -184,6 +187,7 @@ void CardModel::look_up_in_safari(const std::string &word)
         if (AppleScript::run_apple_script(ss.str())) {
             last_safari_word = word;
         }
+#endif
     }
 }
 

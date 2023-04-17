@@ -9,10 +9,15 @@ typedef SpeechChannelRecord *SpeechChannel;
 class SpeechEngine
 {
 public:
-    SpeechEngine();
+    SpeechEngine(const std::string &voice);
     ~SpeechEngine();
 
     void say(const std::string &text);
+
+private:
+    static void say(const std::string &text, SpeechChannel chan);
+    static SpeechChannel create_channel(const std::string &voice);
+//    static void speech_done_callback(SpeechChannel, void *ptr);
 
 private:
     SpeechChannel channel;

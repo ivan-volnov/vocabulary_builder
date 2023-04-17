@@ -2,18 +2,34 @@ cmake_minimum_required(VERSION 3.5)
 
 project(vocabulary_builder LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+
+find_package(CURL REQUIRED)
 
 add_subdirectory(libs/sqlite_database)
 add_subdirectory(libs/string_essentials)
 add_subdirectory(libs/tiled_ncurses)
 
-set(MM_SOURCE_FILES
-    src/utility/apple_script.mm
-)
+if (APPLE)
+    set(FRAMEWORKS
+        "-framework ApplicationServices"
+        "-framework Foundation"
+    )
+    set(APPLE_SOURCES
+        src/utility/apple_script.h
+        src/utility/apple_script.mm
+        src/utility/speech_engine_mac.cpp
+    )
+    set_source_files_properties(
+        src/utility/apple_script.mm
+        PROPERTIES COMPILE_FLAGS "-x objective-c++"
+    )
+else()
+    set(FRAMEWORKS "")
+    set(APPLE_SOURCES src/utility/speech_engine_none.cpp)
+endif()
 
 add_executable(${PROJECT_NAME}
     src/app.cpp
@@ -28,34 +44,35 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utility/anki_client.cpp
     src/utility/anki_client.h
-    src/utility/apple_script.h
     src/utility/curl_request.cpp
     src/utility/curl_request.h
-    src/utility/speech_engine.cpp
     src/utility/speech_engine.h
     src/utility/tools.cpp
     src/utility/tools.h
-    ${MM_SOURCE_FILES}
-)
-
-set_source_files_properties(${MM_SOURCE_FILES}
-    PROPERTIES COMPILE_FLAGS "-x objective-c++"
+    ${APPLE_SOURCES}
 )
 
 target_include_directories(${PROJECT_NAME}
     PRIVATE ./
+            ${CURL_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}
     string_essentials
     tiled_ncurses
     sqlite_database
-    curl
-    "-framework ApplicationServices"
-    "-framework Foundation"
+    ${CURL_LIBRARIES}
+    ${FRAMEWORKS}
 )
 
-install (TARGETS
-    ${PROJECT_NAME}
+target_compile_options(${PROJECT_NAME}
+    PUBLIC -march=native
+           -fno-rtti
+           -fPIE
+           -fstack-protector-all
+)
+
+install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
+    COMPONENT ${PROJECT_NAME}
 )
