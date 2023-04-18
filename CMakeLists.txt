@@ -50,6 +50,7 @@ add_executable(${PROJECT_NAME}
     src/utility/anki_client.hpp
     src/utility/curl_request.cpp
     src/utility/curl_request.hpp
+    src/utility/file.hpp
     src/utility/speech_engine.hpp
     src/utility/tools.cpp
     src/utility/tools.hpp

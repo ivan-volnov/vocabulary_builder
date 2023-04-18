@@ -1,17 +1,18 @@
+#ifdef __APPLE__
+#include "utility/apple_script.h"
+#endif
 #include "card_model.hpp"
 #include "config.hpp"
 #include "sqlite_database/sqlite_database.h"
 #include "utility/anki_client.hpp"
+#include "utility/file.hpp"
 #include "utility/speech_engine.hpp"
 #include "utility/tools.hpp"
 #include <iostream>
 #include <regex>
+#include <st/formatter.hpp>
 #include <string_essentials/string_essentials.hpp>
 #include <unordered_set>
-
-#ifdef __APPLE__
-#include "utility/apple_script.h"
-#endif
 
 CardModel::CardModel()
 {
@@ -37,7 +38,7 @@ void CardModel::open_kindle_db()
 
 std::vector<std::string> CardModel::get_kindle_booklist() const
 {
-    assert(kindle_db);
+    st::assert_or_throw(!!kindle_db, "Kindle database is not open");
     std::vector<std::string> result;
     auto sql = kindle_db->create_query();
     sql << "SELECT DISTINCT title FROM BOOK_INFO";
@@ -49,7 +50,7 @@ std::vector<std::string> CardModel::get_kindle_booklist() const
 
 void CardModel::load_from_kindle(const std::string &book, size_t &current_card_idx)
 {
-    assert(kindle_db);
+    st::assert_or_throw(!!kindle_db, "Kindle database is not open");
     auto sql = kindle_db->create_query();
     sql << "SELECT DISTINCT w.stem\n"
            "FROM WORDS w\n"
@@ -417,4 +418,46 @@ void CardModel::anki_fix_collection(bool commit) const
             }
         }
     }
+}
+
+void CardModel::anki_nvim_export(const char *filename) const
+{
+    auto notes = anki->request(
+        "findNotes",
+        {
+            {"query", "\"deck:Vocabulary Profile\" -is:new -is:learn -is:suspended"}
+    });
+    notes = anki->request(
+        "notesInfo",
+        {
+            {"notes", std::move(notes)}
+    });
+
+    std::map<std::string, std::string> map;
+    for (const auto &note : notes) {
+        const auto &fields = note.at("fields");
+        auto phrase = fields.at("Front").at("value").get<std::string>();
+        auto translation = fields.at("Back").at("value").get<std::string>();
+        string_essentials::erase(phrase, ", etc.");
+        string_essentials::erase(phrase, ", etc");
+        tools::clear_string(phrase);
+        tools::clear_string(translation);
+        map.emplace(std::move(phrase), std::move(translation));
+    }
+
+    File file{filename, "w"};
+    fmt::print(file, "{{\n");
+    bool first{true};
+    for (const auto &w : map) {
+        if (first) [[unlikely]] {
+            first = false;
+        }
+        else {
+            fmt::print(file, ",\n");
+        }
+        fmt::print(
+            file, R"(    "{}": "{}")", st::formatter::escaped(w.first, "\"\\"),
+            st::formatter::escaped(w.second, "\"\\"));
+    }
+    fmt::print(file, "\n}}\n");
 }

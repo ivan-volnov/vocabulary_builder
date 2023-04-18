@@ -43,6 +43,7 @@ public:
     bool anki_find_card(Card &card) const;
 
     void anki_fix_collection(bool commit) const;
+    void anki_nvim_export(const char *filename) const;
 
 private:
     std::vector<std::unique_ptr<Card>> cards;

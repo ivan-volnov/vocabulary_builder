@@ -19,6 +19,8 @@ Options:
   --suspended                   Work with suspended cards
   --check-collection            Check whole collection
   --fix-collection              Fix whole collection
+  --nvim-export                 Export to ~/.config/nvim/dictionary.json
+  --nvim-export <file>          Export to <file>
 )";
 
 using namespace st;
@@ -33,6 +35,7 @@ auto main(int argc, char *argv[]) -> int
         bool suspended{};
         bool check_collection{};
         bool fix_collection{};
+        const char *nvim_export_filename{};
 
         for (auto it = argv + 1, end = argv + argc; it != end; ++it) {
             std::string_view arg{*it};
@@ -76,6 +79,15 @@ auto main(int argc, char *argv[]) -> int
                 fix_collection = true;
                 continue;
             }
+            if (arg == "--nvim-export") {
+                if (it + 1 == end) {
+                    nvim_export_filename = "~/.config/nvim/dictionary.json";
+                }
+                else {
+                    nvim_export_filename = *++it;
+                }
+                continue;
+            }
             fmt::print("Unexpected argument: {}\n{}", arg, APP_HELP);
             return 1;
         }
@@ -90,6 +102,10 @@ auto main(int argc, char *argv[]) -> int
         }
         if (fix_collection) {
             model->anki_fix_collection(true);
+            return 0;
+        }
+        if (nvim_export_filename) {
+            model->anki_nvim_export(nvim_export_filename);
             return 0;
         }
         if (query_word) {
@@ -110,7 +126,8 @@ auto main(int argc, char *argv[]) -> int
             size_t item_idx = 0;
             model->open_kindle_db();
             auto booklist = model->get_kindle_booklist();
-            if (auto last_book = Config::get_state<std::string>("kindle_book"); !last_book.empty()) {
+            if (auto last_book = Config::get_state<std::string>("kindle_book");
+                !last_book.empty()) {
                 auto it = std::find(booklist.begin(), booklist.end(), last_book);
                 if (it != booklist.end()) {
                     item_idx = std::distance(booklist.begin(), it);
@@ -148,7 +165,8 @@ auto main(int argc, char *argv[]) -> int
         auto border = layout->create<SimpleBorder>(3, 4);
         layout->create<Footer>();
         auto progress = layout->create<ProgressBar>(ColorScheme::Blue);
-        auto main_window = border->create<MainWindow>(screen, progress, model, current_card_idx);
+        auto main_window =
+            border->create<MainWindow>(screen, progress, model, current_card_idx);
         screen->run_modal();
         main_window->save_state();
     }
