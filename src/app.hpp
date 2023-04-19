@@ -1,7 +1,7 @@
 #ifndef APP_HPP
 #define APP_HPP
 
-#include <tiled_ncurses/tiled_ncurses.hpp>
+#include <st/tiled_ncurses.hpp>
 #include <unordered_set>
 
 
@@ -16,12 +16,13 @@ constexpr auto Blue = "blue";
 
 } // namespace ColorScheme
 
-class MainWindow : public CursesWindow
+class MainWindow : public st::CursesWindow
 {
 public:
     MainWindow(
-        std::shared_ptr<Screen> screen, std::weak_ptr<ProgressBar> progressbar_ptr,
-        std::shared_ptr<CardModel> model_, size_t current_card_idx);
+        std::shared_ptr<st::Screen> screen,
+        std::weak_ptr<st::ProgressBar> progressbar_ptr, std::shared_ptr<CardModel> model_,
+        size_t current_card_idx);
 
 public:
     void paint() const override;
@@ -34,15 +35,15 @@ private:
     void current_card_idx_changed(size_t prev_card_idx);
 
 private:
-    std::weak_ptr<Screen> screen_ptr;
-    std::weak_ptr<ProgressBar> progressbar_ptr;
+    std::weak_ptr<st::Screen> screen_ptr;
+    std::weak_ptr<st::ProgressBar> progressbar_ptr;
     std::shared_ptr<CardModel> model;
     std::string txt;
     size_t current_card_idx;
     std::unordered_set<std::string> skipped_list;
 };
 
-class Footer : public CursesWindow
+class Footer : public st::CursesWindow
 {
 public:
     Footer();

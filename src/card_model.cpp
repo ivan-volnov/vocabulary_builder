@@ -11,7 +11,7 @@
 #include <iostream>
 #include <regex>
 #include <st/formatter.hpp>
-#include <string_essentials/string_essentials.hpp>
+#include <st/string_functions.hpp>
 #include <unordered_set>
 
 CardModel::CardModel()
@@ -212,7 +212,7 @@ void CardModel::look_up_in_safari(const std::string &word)
         ss << "set myURL to "
               "\"https://dictionary.cambridge.org/search/direct/?datasetsearch="
            << Config::get<std::string>("cambridge_dictionary")
-           << "&q=" << string_essentials::url_encode(word)
+           << "&q=" << st::url_encode(word)
            << "\"\n"
               "tell application \"Safari\"\n"
               "    if the URL of the front document starts with "
@@ -242,8 +242,8 @@ void CardModel::say(const std::string &word) const
         txt != "more or less") {
         txt = std::regex_replace(txt, std::regex("\\bor\\b"), ",");
     }
-    string_essentials::erase(txt, "(");
-    string_essentials::erase(txt, ")");
+    st::erase_all(txt, "(");
+    st::erase_all(txt, ")");
     if (txt == "read, read, read") {
         txt = "read, red, red";
     }
@@ -303,7 +303,7 @@ void CardModel::anki_reload_card(Card &card) const
             note.at("fields").at("Front").at("value").get<std::string>(), changed));
         card.set_back(tools::clear_string(
             note.at("fields").at("Back").at("value").get<std::string>(), changed));
-        card.set_pos(string_essentials::split<std::set>(
+        card.set_pos(tools::split<std::set>(
             tools::clear_string(
                 note.at("fields").at("PoS").at("value").get<std::string>(), changed),
             ", "));
@@ -401,8 +401,8 @@ void CardModel::anki_fix_collection(bool commit) const
                 });
             }
         }
-        const auto pos = string_essentials::join(
-            string_essentials::split<std::set>(tools::clear_string(pos_old), ", "), ", ");
+        const auto s = tools::split<std::set>(tools::clear_string(pos_old), ", ");
+        const auto pos = fmt::format("{}", fmt::join(s, ", "));
         if (pos != pos_old) {
             std::cout << "Fix pos: " << pos_old << " to: " << pos << std::endl;
             if (commit) {
@@ -438,8 +438,8 @@ void CardModel::anki_nvim_export(const char *filename) const
         const auto &fields = note.at("fields");
         auto phrase = fields.at("Front").at("value").get<std::string>();
         auto translation = fields.at("Back").at("value").get<std::string>();
-        string_essentials::erase(phrase, ", etc.");
-        string_essentials::erase(phrase, ", etc");
+        st::erase_all(phrase, ", etc.");
+        st::erase_all(phrase, ", etc");
         tools::clear_string(phrase);
         tools::clear_string(translation);
         map.emplace(std::move(phrase), std::move(translation));

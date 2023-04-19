@@ -1,12 +1,6 @@
 [submodule "libs/sqlite_database"]
 	path = libs/sqlite_database
 	url = https://github.com/ivan-volnov/sqlite_database.git
-[submodule "libs/string_essentials"]
-	path = libs/string_essentials
-	url = https://github.com/ivan-volnov/string_essentials.git
-[submodule "libs/tiled_ncurses"]
-	path = libs/tiled_ncurses
-	url = https://github.com/ivan-volnov/tiled_ncurses.git
 [submodule "libs/libst"]
 	path = libs/libst
 	url = git@github.com:ivan-volnov/libst.git

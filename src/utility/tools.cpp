@@ -1,9 +1,5 @@
 #include "tools.hpp"
-#include <cassert>
-#include <filesystem>
-#include <string_essentials/string_essentials.hpp>
-#include <sys/sysctl.h>
-#include <unistd.h>
+#include <st/string_functions.hpp>
 
 std::string tools::weekday_to_string(uint32_t day)
 {
@@ -29,16 +25,16 @@ std::string tools::weekday_to_string(uint32_t day)
 
 std::string tools::clear_string(const std::string &string)
 {
-    auto str = string;
-    string_essentials::strip_html_tags(str);
-    string_essentials::replace(str, ",", ", ");
-    string_essentials::replace(str, "!", "! ");
-    string_essentials::replace(str, " )", ")");
-    string_essentials::replace(str, "( ", "(");
-    string_essentials::replace(str, " ,", ",");
-    string_essentials::replace_recursive(str, "  ", " ");
-    string_essentials::trim(str);
-    return str;
+    auto s = string;
+    st::strip_html_tags(s);
+    st::replace_all(s, ",", ", ");
+    st::replace_all(s, "!", "! ");
+    st::replace_all(s, " )", ")");
+    st::replace_all(s, "( ", "(");
+    st::replace_all(s, " ,", ",");
+    st::replace_recursive(s, "  ", " ");
+    st::trim(s);
+    return s;
 }
 
 std::string tools::clear_string(const std::string &string, bool &changed)

@@ -8,14 +8,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(CURL REQUIRED)
 
-option(ST_CRYPTO "Build with crypto library" OFF)
 option(ST_SQLITE "Build with sqlite3 library" OFF)
+option(ST_NCURSES "Build with ncurses library" ON)
 option(ST_TEST "Build tests" OFF)
 
 add_subdirectory(libs/libst)
 add_subdirectory(libs/sqlite_database)
-add_subdirectory(libs/string_essentials)
-add_subdirectory(libs/tiled_ncurses)
 
 if (APPLE)
     set(FRAMEWORKS
@@ -63,8 +61,6 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-    string_essentials
-    tiled_ncurses
     sqlite_database
     st
     ${CURL_LIBRARIES}

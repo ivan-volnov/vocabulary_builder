@@ -4,7 +4,7 @@
 #include <ncurses.h>
 
 MainWindow::MainWindow(
-    std::shared_ptr<Screen> screen, std::weak_ptr<ProgressBar> progressbar_ptr,
+    std::shared_ptr<st::Screen> screen, std::weak_ptr<st::ProgressBar> progressbar_ptr,
     std::shared_ptr<CardModel> model_, size_t current_card_idx) :
     screen_ptr(screen),
     progressbar_ptr(progressbar_ptr),
@@ -41,8 +41,8 @@ uint8_t MainWindow::process_key(char32_t ch, bool is_symbol)
     else if (ch == 'i' && is_symbol) {
         if (auto screen = screen_ptr.lock()) {
             screen->show_cursor(true);
-            auto border = screen->create<SimpleBorder>(3, 4);
-            auto line = border->create<InputLine>("New word: ");
+            auto border = screen->create<st::SimpleBorder>(3, 4);
+            auto line = border->create<st::InputLine>("New word: ");
             line->run_modal();
             if (!line->is_cancelled()) {
                 auto index = model->insert_new_card(line->get_text(), current_card_idx);
@@ -97,7 +97,7 @@ void MainWindow::print(const std::string &str) const
 void MainWindow::current_card_idx_changed(size_t prev_card_idx)
 {
     if (auto progress = progressbar_ptr.lock()) {
-        progress->set_progres(100 * (current_card_idx + 1) / model->size());
+        progress->set_progres(100.0 * (current_card_idx + 1) / model->size());
     }
     if (prev_card_idx != static_cast<size_t>(-1)) {
         model->anki_reload_card(model->get_card(prev_card_idx));

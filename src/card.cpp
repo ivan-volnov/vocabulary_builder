@@ -1,5 +1,5 @@
 #include "card.hpp"
-#include <string_essentials/string_essentials.hpp>
+#include <fmt/format.h>
 
 std::string Card::get_front() const
 {
@@ -45,12 +45,12 @@ uint64_t Card::get_note_id() const
 
 std::string Card::get_level_string() const
 {
-    return string_essentials::join(levels, ", ");
+    return fmt::format("{}", fmt::join(levels, ", "));
 }
 
 std::string Card::get_pos_string() const
 {
-    return string_essentials::join(pos, ", ");
+    return fmt::format("{}", fmt::join(pos, ", "));
 }
 
 void Card::add_tag(const std::string &tag)
