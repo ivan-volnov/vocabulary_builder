@@ -10,10 +10,15 @@ find_package(CURL REQUIRED)
 
 option(ST_SQLITE "Build with sqlite3 library" OFF)
 option(ST_NCURSES "Build with ncurses library" ON)
+option(ST_OPENSSL "Build with openssl library" OFF)
 option(ST_TEST "Build tests" OFF)
 
+enable_testing()
 add_subdirectory(libs/libst)
 add_subdirectory(libs/sqlite_database)
+if (ST_TEST)
+    add_subdirectory(test)
+endif()
 
 if (APPLE)
     set(FRAMEWORKS
